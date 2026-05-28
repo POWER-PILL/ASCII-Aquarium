@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCII Aquarium</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+canvas { display: block; margin: auto; image-rendering: pixelated; cursor: crosshair; }
+body { display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<canvas id="aq" width="1024" height="768"></canvas>
+<script>
+"use strict";
+// ============================================================================
+//  ASCII Aquarium — Browser Port (from ESP32 CYD v1.67)
+//  Target: 1024 x 768 full-screen canvas
+// ============================================================================
+
+const SCREEN_W = 1024;
+const SCREEN_H = 768;
+const SCALE = SCREEN_W / 320; // 3.2
+const SEA_LEVEL_Y = SCREEN_H - Math.round(36 * SCALE);
+const BG_GRADIENT_H = Math.round(SCREEN_H / 4);
+
+const canvas = document.getElementById("aq");
+const ctx = canvas.getContext("2d");
+
+// ---- Helpers ----------------------------------------------------------------
+function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+function frand(a, b) { return a + (b - a) * Math.random(); }
+function randInt(a, b) { return Math.floor(frand(a, b)); }
+
+function rgbStr(r, g, b) {
+  return `rgb(${clamp(Math.round(r),0,255)},${clamp(Math.round(g),0,255)},${clamp(Math.round(b),0,255)})`;
+}
+function scaleColor(hex, brightness) {
+  const r = ((hex >> 16) & 0xFF) * brightness;
+  const g = ((hex >> 8) & 0xFF) * brightness;
+  const b = (hex & 0xFF) * brightness;
+  return rgbStr(r, g, b);
+}
+function hexToRgb(hex) {
+  return rgbStr((hex>>16)&0xFF, (hex>>8)&0xFF, hex&0xFF);
+}
+
+// ---- Constants & species ----------------------------------------------------
+const MIN_FISH = 6, MAX_FISH = 36, DEFAULT_FISH = 16;
+const MIN_BUBBLES = 0, MAX_BUBBLES = 50, DEFAULT_BUBBLES = 10;
+const MAX_FLAKES = 16, MAX_FISH_POOL = 48;
+const CREATURE_SCALE = SCALE * 0.5;
+const FISH_SWIM_WAVE_AMP = 1.5 * CREATURE_SCALE;
+const FISH_SWIM_WAVE_SPEED = 5.6;
+const FISH_SWIM_WAVE_SPACING = 0.85;
+const FISH_AVOID_RX = 52 * SCALE, FISH_AVOID_RY = 20 * SCALE, FISH_AVOID_STR = 4.2;
+const FISH_CENTER_Y_OFF = 7 * SCALE;
+const OCTOPUS_EXIT_PAD = 42 * SCALE;
+const OCTOPUS_CY_OFF = 8 * SCALE;
+const OCTOPUS_FISH_ARX = 76 * SCALE, OCTOPUS_FISH_ARY = 34 * SCALE, OCTOPUS_FISH_ASTR = 8;
+const OCTOPUS_FISH_CRX = 46 * SCALE, OCTOPUS_FISH_CRY = 22 * SCALE;
+const SEAHORSE_EXIT_PAD = 48 * SCALE;
+const SEAHORSE_CX_OFF = 15 * SCALE, SEAHORSE_CY_OFF = 24 * SCALE;
+const SEAHORSE_FISH_ARX = 58 * SCALE, SEAHORSE_FISH_ARY = 38 * SCALE, SEAHORSE_FISH_ASTR = 6;
+const SEAHORSE_FISH_CRX = 34 * SCALE, SEAHORSE_FISH_CRY = 28 * SCALE;
+const SEAHORSE_SPEED_BOOST = 1.18;
+const VISITOR_CRX = 56 * SCALE, VISITOR_CRY = 38 * SCALE;
+const FREQ_OPTIONS = [1, 2, 4, 6, 12, 60];
+
+const FISH_SPECIES = [
+  { right: "><>",            color: 0x50C878 },
+  { right: ">)))'>",         color: 0x0096FF },
+  { right: "oO0",            color: 0xFFC0CB },
+  { right: "><((( '>",       color: 0xFFB800 },
+  { right: "~~{o}",          color: 0xEE82EE },
+  { right: "><(((o>",        color: 0xFF0000 },
+  { right: "><((((>`",       color: 0xFFA500 },
+  { right: "><((( '>",       color: 0x00B4AA },
+  { right: "}>{{{{* >",      color: 0x4B009C },
+  { right: "><((( *>",       color: 0xC878FF },
+  { right: ">(')>",          color: 0xFF9EC8 },
+  { right: ">'>",            color: 0xFFFF00 },
+];
+
+const ALT_COLORS = [0x00FFFF, 0xFF00FF, 0xFFFFFF, 0x87CEEB, 0xFFD700, 0xFFA500, 0xADFF2F, 0xA9A9A9];
+
+function mirrorChar(c) {
+  const m = {'>':'<','<':'>','(':')',')':'(','{':'}','}':'{','[':']',']':'['};
+  return m[c] || c;
+}
+function mirrorGlyph(s) {
+  return s.split('').reverse().map(mirrorChar).join('');
+}
+
+// Pre-compute mirrored glyphs
+const FISH_LEFT = FISH_SPECIES.map(sp => mirrorGlyph(sp.right));
+
+// ---- ASCII Clock Glyphs ----------------------------------------------------
+const ASCII_CLOCK_GLYPHS = {
+  '0': ["  ___"," / _ \\","| | | |","| |_| |"," \\___/",""],
+  '1': [" _","/ |","| |","| |","|_|",""],
+  '2': [" ____","|___ \\","  __) |"," / __/","|_____|",""],
+  '3': [" _____","|___ /","  |_ \\"," ___) |","|____/",""],
+  '4': [" _  _","| || |","| || |_","|__   _|","   |_|",""],
+  '5': [" ____","| ___|","|___ \\"," ___) |","|____/",""],
+  '6': ["  __"," / /_","| '_ \\","| (_) |"," \\___/",""],
+  '7': [" _____","|___  |","   / /","  / /"," /_/",""],
+  '8': ["  ___"," ( _ )"," / _ \\","| (_) |"," \\___/",""],
+  '9': ["  ___"," / _ \\","| (_) |"," \\__, |","  /_/",""],
+  ':': [" "," _","(_)"," _","(_)"," "],
+  ' ': [" "," "," "," "," "," "],
+};
+
+// ---- Background modes -------------------------------------------------------
+const BG_BLACK = 0, BG_BLUE = 1, BG_PURPLE = 2, BG_FLOWERS = 3, BG_COUNT = 4;
+const BG_NAMES = ["Black", "Blue Fade", "Purple Fade", "Flowers"];
+
+// ---- Settings Tab -----------------------------------------------------------
+const TAB_TANK = 0, TAB_SEAWEED = 1, TAB_CLOCK = 2, TAB_BG = 3;
+
+// ---- State ------------------------------------------------------------------
+let fishCount = DEFAULT_FISH;
+let bubbleCount = DEFAULT_BUBBLES;
+let octFreq = 1, shFreq = 1;
+let swaySpeed = 1.10, seaweedLen = 1.35, seaweedLenRand = 0.35;
+let bgMode = BG_BLUE;
+let hudVisible = false, settingsOpen = false, activeTab = TAB_TANK;
+let clockVisible = false, clockUse24h = false, clockStyle = 0; // 0=small, 1=ascii
+let clockSmallPos = 0; // 0=top,1=bottom
+let clockFlipH = false;
+let clockSmallColor = "#FFFFFF", clockAsciiColor = "#00145F";
+let clockColorIdx = 1;
+
+const CLOCK_COLORS = [
+  "#00145F","#FFFFFF","#C0C0C0","#808080","#FF2828","#FF8014",
+  "#FFDC28","#A0FF28","#28DC50","#00B478","#00DCDC","#50B4FF",
+  "#2850FF","#7850FF","#DC3CFF","#FF78C8","#640000","#823800",
+  "#746C12","#00521E","#004C4C","#00009C","#3A1478","#9C78FF"
+];
+
+let fishPool = [];
+let flakes = [];
+let bubbles = [];
+let octopus = { active: false, nextSpawnMs: 0 };
+let seahorse = { active: false, nextSpawnMs: 0 };
+
+let aquariumTimeMs = 0;
+let lastFrameTime = 0;
+let fpsCount = 0, fpsTimer = 0, fps = 0;
+
+// Pixel flowers for BG_FLOWERS mode
+let pixelFlowers = [
+  { cx: 70*SCALE, cy: 70*SCALE, radius: 58*SCALE, rotation: 6.28, color: "#001A4C" },
+  { cx: 248*SCALE, cy: 72*SCALE, radius: 58*SCALE, rotation: 6.82, color: "#001642" },
+  { cx: 202*SCALE, cy: 156*SCALE, radius: 28*SCALE, rotation: 3.14, color: "#746C12" },
+];
+
+// Seaweed roots (cached)
+const SEAWEED_ROOTS = 12;
+const seaweedBaseX = [];
+const seaweedAmp = [];
+const seaweedHeightNoise = [];
+for (let i = 0; i < SEAWEED_ROOTS; i++) {
+  seaweedBaseX.push(10*SCALE + i * (SCREEN_W - 20*SCALE) / (SEAWEED_ROOTS - 1));
+  seaweedAmp.push((5 + (i % 4) * 2) * SCALE);
+  seaweedHeightNoise.push(Math.sin(i * 2.173 + 0.61));
+}
+
+// ---- Font metrics -----------------------------------------------------------
+const CHAR_W = Math.round(9.6 * SCALE);  // ~6px * scale for monospace char
+const CHAR_H = Math.round(16 * SCALE);
+const FONT_SIZE = Math.round(14 * SCALE);
+const SMALL_FONT = Math.round(12 * SCALE);
+const MONO_FONT = `${FONT_SIZE}px "Courier New", Courier, monospace`;
+const SMALL_MONO = `${SMALL_FONT}px "Courier New", Courier, monospace`;
+const CREATURE_FONT_SIZE = Math.round(14 * CREATURE_SCALE);
+const CREATURE_FONT = `${CREATURE_FONT_SIZE}px "Courier New", Courier, monospace`;
+const UI_FONT_SIZE = Math.round(11 * SCALE);
+const UI_FONT = `${UI_FONT_SIZE}px "Courier New", Courier, monospace`;
+
+// ---- Fish helpers -----------------------------------------------------------
+function fishGlyph(f) { return f.vx >= 0 ? FISH_SPECIES[f.type].right : FISH_LEFT[f.type]; }
+
+function measureText(txt) {
+  ctx.font = CREATURE_FONT;
+  return ctx.measureText(txt).width;
+}
+
+function randomDepthBrightness() {
+  const roll = Math.random() * 100;
+  if (roll < 28) return frand(0.48, 0.64);
+  if (roll < 70) return frand(0.66, 0.84);
+  return frand(0.88, 1.0);
+}
+
+function activateFish(f) {
+  f.active = true;
+  f.type = randInt(0, FISH_SPECIES.length);
+  const baseColor = FISH_SPECIES[f.type].color;
+  f.displayColor = (Math.random() < 0.2) ? ALT_COLORS[randInt(0, ALT_COLORS.length)] : baseColor;
+  f.depthBright = randomDepthBrightness();
+  f.renderColor = scaleColor(f.displayColor, f.depthBright);
+  f.x = frand(-42*SCALE, SCREEN_W + 12*SCALE);
+  f.y = frand(20*SCALE, SEA_LEVEL_Y - 10*SCALE);
+  f.vx = frand(-1, 1);
+  f.vy = frand(-0.5, 0.5);
+  f.speed = frand(14, 30) * SCALE;
+  f.phase = frand(0, 6.28);
+  f.wanderBias = frand(0.4, 1.3);
+  const glyph = fishGlyph(f);
+  f.visualW = measureText(glyph);
+}
+
+function initFishPool() {
+  fishPool = [];
+  for (let i = 0; i < MAX_FISH_POOL; i++) {
+    const f = { active: false };
+    if (i < fishCount) activateFish(f);
+    fishPool.push(f);
+  }
+  spreadFish();
+}
+
+function applyFishPop() {
+  fishCount = clamp(fishCount, MIN_FISH, MAX_FISH);
+  for (let i = 0; i < MAX_FISH_POOL; i++) {
+    if (i < fishCount && !fishPool[i].active) activateFish(fishPool[i]);
+    if (i >= fishCount && fishPool[i].active) fishPool[i].active = false;
+  }
+}
+
+function spreadFish() {
+  const count = clamp(fishCount, 0, MAX_FISH_POOL);
+  const gapX = FISH_AVOID_RX * 0.92, gapY = FISH_AVOID_RY * 1.05;
+  for (let i = 0; i < count; i++) {
+    const f = fishPool[i];
+    if (!f.active) continue;
+    for (let attempt = 0; attempt < 80; attempt++) {
+      const cx = frand(10*SCALE, SCREEN_W - f.visualW - 10*SCALE);
+      const cy = frand(18*SCALE, SEA_LEVEL_Y - 18*SCALE);
+      let clear = true;
+      for (let j = 0; j < count; j++) {
+        if (j === i || !fishPool[j].active) continue;
+        if (Math.abs(fishPool[j].x + fishPool[j].visualW*0.5 - (cx + f.visualW*0.5)) < gapX &&
+            Math.abs(fishPool[j].y + FISH_CENTER_Y_OFF - (cy + FISH_CENTER_Y_OFF)) < gapY) {
+          clear = false; break;
+        }
+      }
+      f.x = cx; f.y = cy;
+      if (clear) break;
+    }
+    f.vx = Math.random() < 0.5 ? -1 : 1;
+    f.vy = frand(-0.22, 0.22);
+  }
+}
+
+// ---- Bubbles ----------------------------------------------------------------
+function resetBubble(b, spread) {
+  b.active = true;
+  b.baseX = frand(8*SCALE, SCREEN_W - 8*SCALE);
+  b.x = b.baseX;
+  b.y = spread ? frand(4*SCALE, SCREEN_H + 48*SCALE) : frand(SCREEN_H - 4*SCALE, SCREEN_H + 48*SCALE);
+  b.vy = frand(12, 28) * SCALE;
+  b.phase = frand(0, 6.28);
+  b.swayAmp = frand(2, 7) * SCALE;
+  b.color = rgbStr(randInt(0,5), randInt(8,24), randInt(45,106));
+}
+
+function initBubbles() {
+  bubbles = [];
+  for (let i = 0; i < MAX_BUBBLES; i++) {
+    const b = { active: false };
+    if (i < bubbleCount) resetBubble(b, true);
+    bubbles.push(b);
+  }
+}
+function applyBubblePop(spread) {
+  bubbleCount = clamp(bubbleCount, MIN_BUBBLES, MAX_BUBBLES);
+  while (bubbles.length < MAX_BUBBLES) bubbles.push({ active: false });
+  for (let i = 0; i < MAX_BUBBLES; i++) {
+    if (i < bubbleCount && !bubbles[i].active) resetBubble(bubbles[i], !!spread);
+    if (i >= bubbleCount && bubbles[i].active) bubbles[i].active = false;
+  }
+}
+
+// ---- Flakes -----------------------------------------------------------------
+function spawnFlake(x, y) {
+  for (let i = 0; i < MAX_FLAKES; i++) {
+    if (!flakes[i].active) {
+      flakes[i] = { active: true, x, y, vy: frand(22, 48)*SCALE,
+        color: rgbStr(randInt(220,256), randInt(118,166), randInt(0,34)) };
+      return;
+    }
+  }
+}
+
+// ---- Octopus ----------------------------------------------------------------
+function octSpawnInterval() { return 3600000 / clamp(octFreq, 1, 60); }
+function scheduleOct(now) { octopus.nextSpawnMs = now + octSpawnInterval(); }
+function spawnOctopus(now) {
+  const left = Math.random() < 0.5;
+  octopus.active = true;
+  octopus.vx = left ? frand(4.5, 8)*SCALE : -frand(4.5, 8)*SCALE;
+  octopus.x = left ? -OCTOPUS_EXIT_PAD : SCREEN_W + OCTOPUS_EXIT_PAD;
+  octopus.baseY = frand(36*SCALE, SEA_LEVEL_Y - 48*SCALE);
+  octopus.y = octopus.baseY;
+  octopus.phase = frand(0, 6.28);
+  octopus.colorPhase = frand(0, 6.28);
+  scheduleOct(now);
+}
+
+// ---- Seahorse ---------------------------------------------------------------
+function shSpawnInterval() { return 3600000 / clamp(shFreq, 1, 60); }
+function scheduleSh(now) { seahorse.nextSpawnMs = now + shSpawnInterval(); }
+function spawnSeahorse(now) {
+  const left = Math.random() < 0.5;
+  seahorse.active = true;
+  seahorse.facingRight = left;
+  seahorse.vx = left ? frand(1.6, 2.9)*SCALE*SEAHORSE_SPEED_BOOST : -frand(1.6, 2.9)*SCALE*SEAHORSE_SPEED_BOOST;
+  seahorse.x = left ? -SEAHORSE_EXIT_PAD : SCREEN_W + SEAHORSE_EXIT_PAD;
+  seahorse.baseY = frand(34*SCALE, SEA_LEVEL_Y - 56*SCALE);
+  seahorse.y = seahorse.baseY;
+  seahorse.phase = frand(0, 6.28);
+  seahorse.finPhase = frand(0, 6.28);
+  scheduleSh(now);
+}
+
+// ---- Update -----------------------------------------------------------------
+function updateFlakes(dt) {
+  const t = aquariumTimeMs * 0.001;
+  for (let i = 0; i < flakes.length; i++) {
+    const f = flakes[i]; if (!f.active) continue;
+    f.y += f.vy * dt;
+    f.x += Math.sin(t * 1.2 + i) * 8 * SCALE * dt;
+    if (f.y > SEA_LEVEL_Y) f.active = false;
+  }
+}
+function updateBubbles(dt) {
+  const t = aquariumTimeMs * 0.001;
+  for (let i = 0; i < clamp(bubbleCount, 0, MAX_BUBBLES); i++) {
+    const b = bubbles[i]; if (!b.active) continue;
+    b.y -= b.vy * dt;
+    b.x = b.baseX + Math.sin(t * 1.8 + b.phase) * b.swayAmp;
+    if (b.y < -10*SCALE) resetBubble(b, false);
+  }
+}
+
+function closestFlake(f, maxD) {
+  let best = -1, bestD2 = maxD * maxD;
+  for (let i = 0; i < flakes.length; i++) {
+    if (!flakes[i].active) continue;
+    const dx = flakes[i].x - f.x, dy = flakes[i].y - f.y;
+    const d2 = dx*dx + dy*dy;
+    if (d2 < bestD2) { bestD2 = d2; best = i; }
+  }
+  return best;
+}
+
+function updateFish(dt) {
+  const t = aquariumTimeMs * 0.001;
+  const count = clamp(fishCount, 0, MAX_FISH_POOL);
+  // Pre-compute centers
+  const cx = new Float32Array(count), cy = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    const f = fishPool[i]; if (!f.active) continue;
+    cx[i] = f.x + f.visualW * 0.5;
+    cy[i] = f.y + FISH_CENTER_Y_OFF;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const f = fishPool[i]; if (!f.active) continue;
+    // Wander
+    f.vx += Math.cos(f.phase + t*0.9) * 0.45 * f.wanderBias * dt;
+    f.vy += Math.sin(f.phase*1.7 + t*0.7) * 0.22 * dt;
+
+    // Schooling
+    let avgVX=0, avgVY=0, sx=0, sy=0, near=0;
+    let repX=0, repY=0, repN=0;
+    for (let j = 0; j < count; j++) {
+      if (j===i || !fishPool[j].active) continue;
+      const n = fishPool[j];
+      const dx = n.x - f.x, dy = n.y - f.y;
+      if (n.type === f.type) {
+        const d2 = dx*dx + dy*dy;
+        if (d2 < 3600*SCALE*SCALE) {
+          avgVX += n.vx; avgVY += n.vy;
+          sx += n.x; sy += n.y; near++;
+        }
+      }
+      let sdx = cx[j] - cx[i], sdy = cy[j] - cy[i];
+      if (sdx > SCREEN_W*0.5) sdx -= SCREEN_W;
+      if (sdx < -SCREEN_W*0.5) sdx += SCREEN_W;
+      const ax = sdx / FISH_AVOID_RX, ay = sdy / FISH_AVOID_RY;
+      const sd2 = ax*ax + ay*ay;
+      if (sd2 > 0.0001 && sd2 < 1) {
+        const dist = Math.sqrt(sdx*sdx + sdy*sdy) + 0.0001;
+        let push = 1 - sd2; push *= push;
+        repX -= (sdx/dist)*push; repY -= (sdy/dist)*push; repN++;
+      }
+    }
+    if (near > 0) {
+      avgVX /= near; avgVY /= near; sx /= near; sy /= near;
+      f.vx += (avgVX - f.vx)*0.45*dt;
+      f.vy += (avgVY - f.vy)*0.25*dt;
+      f.vx += (sx - f.x)*0.0018;
+      f.vy += (sy - f.y)*0.0012;
+    }
+
+    // Feed seeking
+    const fi = closestFlake(f, 140*SCALE);
+    if (fi >= 0) {
+      const dx = flakes[fi].x - f.x, dy = flakes[fi].y - f.y;
+      const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
+      f.vx += (dx/d)*0.95*dt;
+      f.vy += (dy/d)*0.95*dt;
+      if (d < 8*SCALE) flakes[fi].active = false;
+    }
+
+    // Avoid octopus
+    if (octopus.active) {
+      const dx = cx[i] - octopus.x, dy = cy[i] - (octopus.y + OCTOPUS_CY_OFF);
+      const ax = dx/OCTOPUS_FISH_ARX, ay = dy/OCTOPUS_FISH_ARY;
+      const sd2 = ax*ax + ay*ay;
+      if (sd2 > 0.0001 && sd2 < 1) {
+        const dist = Math.sqrt(dx*dx+dy*dy)+0.0001;
+        let push = 1-sd2; push *= push;
+        f.vx += (dx/dist)*push*OCTOPUS_FISH_ASTR*dt;
+        f.vy += (dy/dist)*push*OCTOPUS_FISH_ASTR*dt;
+      }
+    }
+    // Avoid seahorse
+    if (seahorse.active) {
+      const hcx = seahorse.x + SEAHORSE_CX_OFF, hcy = seahorse.y + SEAHORSE_CY_OFF;
+      const dx = cx[i]-hcx, dy = cy[i]-hcy;
+      const ax = dx/SEAHORSE_FISH_ARX, ay = dy/SEAHORSE_FISH_ARY;
+      const sd2 = ax*ax+ay*ay;
+      if (sd2 > 0.0001 && sd2 < 1) {
+        const dist = Math.sqrt(dx*dx+dy*dy)+0.0001;
+        let push = 1-sd2; push *= push;
+        f.vx += (dx/dist)*push*SEAHORSE_FISH_ASTR*dt;
+        f.vy += (dy/dist)*push*SEAHORSE_FISH_ASTR*dt;
+      }
+    }
+
+    if (repN > 0) {
+      f.vx += (repX/repN)*FISH_AVOID_STR*dt;
+      f.vy += (repY/repN)*FISH_AVOID_STR*dt;
+    }
+
+    if (f.y < 18*SCALE) f.vy += 0.8*dt;
+    if (f.y > SEA_LEVEL_Y - 8*SCALE) f.vy -= 0.8*dt;
+
+    let mag = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
+    if (mag < 0.0001) { f.vx = 1; f.vy = 0; mag = 1; }
+    f.vx /= mag; f.vy /= mag;
+
+    const spd = f.speed + Math.sin(t*3.2 + f.phase)*4*SCALE;
+    f.x += f.vx * spd * dt;
+    f.y += f.vy * spd * dt;
+
+    // Keep outside octopus clear zone
+    if (octopus.active) {
+      const fcx = f.x + f.visualW*0.5, fcy = f.y + FISH_CENTER_Y_OFF;
+      const ocy = octopus.y + OCTOPUS_CY_OFF;
+      let dx = fcx - octopus.x, dy = fcy - ocy;
+      let ax = dx/OCTOPUS_FISH_CRX, ay = dy/OCTOPUS_FISH_CRY;
+      let sd2 = ax*ax+ay*ay;
+      if (sd2 < 1) {
+        if (sd2 <= 0.0001) { dx = f.vx >= 0 ? 1 : -1; dy = f.vy >= 0 ? 0.35 : -0.35; ax = dx/OCTOPUS_FISH_CRX; ay = dy/OCTOPUS_FISH_CRY; sd2 = ax*ax+ay*ay; }
+        const sc = 1/Math.sqrt(sd2);
+        f.x += (octopus.x + dx*sc - fcx)*0.55;
+        f.y += (ocy + dy*sc - fcy)*0.55;
+      }
+    }
+    if (seahorse.active) {
+      const fcx = f.x + f.visualW*0.5, fcy = f.y + FISH_CENTER_Y_OFF;
+      const hcx = seahorse.x + SEAHORSE_CX_OFF, hcy = seahorse.y + SEAHORSE_CY_OFF;
+      let dx = fcx-hcx, dy = fcy-hcy;
+      let ax = dx/SEAHORSE_FISH_CRX, ay = dy/SEAHORSE_FISH_CRY;
+      let sd2 = ax*ax+ay*ay;
+      if (sd2 < 1) {
+        if (sd2 <= 0.0001) { dx = f.vx>=0?1:-1; dy = f.vy>=0?0.35:-0.35; ax = dx/SEAHORSE_FISH_CRX; ay = dy/SEAHORSE_FISH_CRY; sd2 = ax*ax+ay*ay; }
+        const sc = 1/Math.sqrt(sd2);
+        f.x += (hcx+dx*sc-fcx)*0.45;
+        f.y += (hcy+dy*sc-fcy)*0.45;
+      }
+    }
+
+    // Horizontal wrap
+    const wp = f.visualW + 10*SCALE;
+    if (f.x > SCREEN_W + wp) { f.x = -wp; f.depthBright = randomDepthBrightness(); f.renderColor = scaleColor(f.displayColor, f.depthBright); }
+    if (f.x < -wp) { f.x = SCREEN_W + wp; f.depthBright = randomDepthBrightness(); f.renderColor = scaleColor(f.displayColor, f.depthBright); }
+    f.y = clamp(f.y, 14*SCALE, SEA_LEVEL_Y - 6*SCALE);
+  }
+}
+
+function updateOctopus(now, dt) {
+  if (!octopus.active) {
+    if (octopus.nextSpawnMs === 0) scheduleOct(now);
+    else if (now >= octopus.nextSpawnMs) spawnOctopus(now);
+    return;
+  }
+  const t = now * 0.001;
+  octopus.x += octopus.vx * dt;
+  octopus.y = octopus.baseY + Math.sin(t*0.45 + octopus.phase)*6*SCALE;
+  if ((octopus.vx > 0 && octopus.x > SCREEN_W + OCTOPUS_EXIT_PAD) ||
+      (octopus.vx < 0 && octopus.x < -OCTOPUS_EXIT_PAD)) octopus.active = false;
+}
+
+function updateSeahorse(now, dt) {
+  if (!seahorse.active) {
+    if (seahorse.nextSpawnMs === 0) scheduleSh(now);
+    else if (now >= seahorse.nextSpawnMs) spawnSeahorse(now);
+    return;
+  }
+  const t = now * 0.001;
+  const pulse = 1 + Math.sin(t*0.55 + seahorse.phase)*0.18;
+  seahorse.x += seahorse.vx * pulse * dt;
+  seahorse.y = seahorse.baseY + Math.sin(t*0.82 + seahorse.phase)*4.5*SCALE +
+               Math.sin(t*2.15 + seahorse.phase*1.7)*0.9*SCALE;
+  if ((seahorse.vx > 0 && seahorse.x > SCREEN_W + SEAHORSE_EXIT_PAD) ||
+      (seahorse.vx < 0 && seahorse.x < -SEAHORSE_EXIT_PAD)) seahorse.active = false;
+}
+
+function keepVisitorsSeparated() {
+  if (!octopus.active || !seahorse.active) return;
+  const ocx = octopus.x, ocy = octopus.y + OCTOPUS_CY_OFF;
+  const hcx = seahorse.x + SEAHORSE_CX_OFF, hcy = seahorse.y + SEAHORSE_CY_OFF;
+  let dx = hcx-ocx, dy = hcy-ocy;
+  let ax = dx/VISITOR_CRX, ay = dy/VISITOR_CRY;
+  let sd2 = ax*ax+ay*ay;
+  if (sd2 >= 1) return;
+  if (sd2 <= 0.0001) { dx = seahorse.vx>=octopus.vx?1:-1; dy=0.35; ax=dx/VISITOR_CRX; ay=dy/VISITOR_CRY; sd2=ax*ax+ay*ay; }
+  const sc = 1/Math.sqrt(sd2);
+  const pushX = (ocx+dx*sc-hcx)*0.18, pushY = (ocy+dy*sc-hcy)*0.22;
+  seahorse.x += pushX; seahorse.baseY = clamp(seahorse.baseY+pushY, 24*SCALE, SEA_LEVEL_Y-54*SCALE); seahorse.y += pushY;
+  octopus.x -= pushX*0.55; octopus.baseY = clamp(octopus.baseY-pushY*0.55, 28*SCALE, SEA_LEVEL_Y-44*SCALE); octopus.y -= pushY*0.55;
+}
+
+// ---- Drawing ----------------------------------------------------------------
+function drawBackground() {
+  if (bgMode === BG_BLACK) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+  } else if (bgMode === BG_BLUE) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    const grad = ctx.createLinearGradient(0, 0, 0, BG_GRADIENT_H);
+    grad.addColorStop(0, "rgba(0,8,255,0.9)");
+    grad.addColorStop(0.3, "rgba(0,4,164,0.7)");
+    grad.addColorStop(0.6, "rgba(0,2,90,0.5)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, SCREEN_W, BG_GRADIENT_H);
+  } else if (bgMode === BG_PURPLE) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    const grad = ctx.createLinearGradient(0, 0, 0, BG_GRADIENT_H);
+    grad.addColorStop(0, "rgba(108,6,220,0.9)");
+    grad.addColorStop(0.3, "rgba(58,2,136,0.7)");
+    grad.addColorStop(0.6, "rgba(18,0,46,0.5)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, SCREEN_W, BG_GRADIENT_H);
+  } else if (bgMode === BG_FLOWERS) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    for (const fl of pixelFlowers) {
+      ctx.strokeStyle = fl.color;
+      ctx.lineWidth = 2 * SCALE;
+      ctx.beginPath();
+      for (let i = 0; i <= 80; i++) {
+        const theta = fl.rotation + (6.28318 * i) / 80;
+        const petal = 0.5 + 0.5 * Math.sin(theta * 5);
+        const r = fl.radius * (0.58 + 0.42 * petal);
+        const px = fl.cx + Math.cos(theta) * r;
+        const py = fl.cy + Math.sin(theta) * r;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+}
+
+function seaweedPoint(u, bx, y0, bladeH, sway, tSec, idx) {
+  u = clamp(u, 0, 1);
+  const bodyWave = Math.sin(tSec * (1.05 + idx*0.025)*swaySpeed - u*5.1 + idx*0.72);
+  const ripple = Math.sin(tSec * 0.72 * swaySpeed + u*9 + idx*1.31);
+  const bend = sway * u * (0.20 + u*0.80);
+  const travel = bodyWave * (1.5 + bladeH*0.055) * u*u;
+  const detail = ripple * 1.2 * u;
+  return { x: bx + bend + travel + detail, y: y0 - bladeH * u };
+}
+
+function drawSeaweed() {
+  const tSec = aquariumTimeMs * 0.001;
+  const y0 = SCREEN_H - 2*SCALE;
+  ctx.lineWidth = Math.max(1, SCALE * 0.8);
+
+  for (let i = 0; i < SEAWEED_ROOTS; i++) {
+    const bx = seaweedBaseX[i];
+    const sway = Math.sin(tSec*(0.8+0.09*i)*swaySpeed + i*0.7) * seaweedAmp[i];
+    const hVar = 1 + seaweedLenRand * seaweedHeightNoise[i];
+    const bladeH = clamp(32 * seaweedLen * hVar * SCALE, 18*SCALE, 72*SCALE);
+    let prevX = bx, prevY = y0;
+    const segs = 7;
+    for (let seg = 1; seg <= segs; seg++) {
+      const u = seg / segs;
+      const p = seaweedPoint(u, bx, y0, bladeH, sway, tSec, i);
+      ctx.strokeStyle = u < 0.38 ? "#006400" : u < 0.76 ? "#00FF00" : "#ADFF2F";
+      ctx.beginPath(); ctx.moveTo(prevX, prevY); ctx.lineTo(p.x, p.y); ctx.stroke();
+      if (u < 0.78) {
+        ctx.strokeStyle = "#006400";
+        ctx.beginPath(); ctx.moveTo(prevX+SCALE, prevY); ctx.lineTo(p.x+SCALE, p.y); ctx.stroke();
+      }
+      prevX = p.x; prevY = p.y;
+    }
+    // Branches
+    const branchCount = clamp(Math.floor(bladeH / (14*SCALE)), 2, 5);
+    for (let b = 0; b < branchCount; b++) {
+      let u = 0.30 + b*0.14 + ((i+b)%3)*0.018;
+      if (u > 0.88) u = 0.88;
+      const p = seaweedPoint(u, bx, y0, bladeH, sway, tSec, i);
+      const side = ((i+b)&1) ? 1 : -1;
+      const bLen = (5.5 + ((i*3 + b*5)%5)) * SCALE;
+      const bWig = Math.sin(tSec*(1.1+i*0.03)*swaySpeed + i + b*1.7)*1.2*SCALE;
+      const ex = p.x + side*(bLen*0.58 + Math.abs(sway)*0.05) + bWig;
+      const ey = p.y - bLen*0.78;
+      ctx.strokeStyle = (b&1) ? "#006400" : "#00FF00";
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(ex, ey); ctx.stroke();
+    }
+  }
+}
+
+function drawBubbles() {
+  ctx.font = CREATURE_FONT;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  for (let i = 0; i < clamp(bubbleCount, 0, MAX_BUBBLES); i++) {
+    const b = bubbles[i]; if (!b || !b.active) continue;
+    ctx.fillStyle = b.color;
+    ctx.fillText("o", b.x, b.y);
+  }
+}
+
+function drawFlakes() {
+  ctx.font = CREATURE_FONT;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  for (const f of flakes) {
+    if (!f.active) continue;
+    ctx.fillStyle = f.color;
+    ctx.fillText("*", f.x, f.y);
+  }
+}
+
+function drawFish() {
+  ctx.font = CREATURE_FONT;
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+  const t = aquariumTimeMs * 0.001;
+  const waveBase = t * FISH_SWIM_WAVE_SPEED;
+  const wss = Math.sin(FISH_SWIM_WAVE_SPACING), wsc = Math.cos(FISH_SWIM_WAVE_SPACING);
+  const count = clamp(fishCount, 0, MAX_FISH_POOL);
+  for (let i = 0; i < count; i++) {
+    const f = fishPool[i]; if (!f.active) continue;
+    const txt = fishGlyph(f);
+    let waveAngle = waveBase + f.phase;
+    let wave = Math.sin(waveAngle), waveCos = Math.cos(waveAngle);
+    ctx.fillStyle = f.renderColor;
+
+    // Measure individual character widths for wavy effect
+    let xOff = 0;
+    for (let c = 0; c < txt.length; c++) {
+      if (txt[c] !== ' ') {
+        const yOff = wave * FISH_SWIM_WAVE_AMP;
+        ctx.fillText(txt[c], f.x + xOff, f.y + yOff);
+      }
+      xOff += ctx.measureText(txt[c]).width;
+      const nw = wave*wsc + waveCos*wss;
+      waveCos = waveCos*wsc - wave*wss;
+      wave = nw;
+    }
+  }
+}
+
+function drawOctopus() {
+  if (!octopus.active) return;
+  const t = aquariumTimeMs * 0.001;
+  const cx = octopus.x, cy = octopus.y;
+  const S = SCALE;
+  // Iridescent color
+  const r = 205 + 42*Math.sin(t*0.18 + octopus.colorPhase);
+  const g = 78 + 38*Math.sin(t*0.13 + octopus.colorPhase + 2.1);
+  const b = 178 + 58*Math.sin(t*0.16 + octopus.colorPhase + 4.2);
+  ctx.fillStyle = rgbStr(r, g, b);
+  const CS = CREATURE_SCALE;
+  ctx.font = `${Math.round(16*CS)}px "Courier New", monospace`;
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+
+  const tw = Math.sin(t*1.25 + octopus.phase) * 1.4*CS;
+  ctx.fillText("(", cx-13*CS, cy+tw);
+  ctx.fillText(".", cx-3*CS, cy-5*CS);
+  ctx.fillText(".", cx+7*CS, cy-5*CS);
+  ctx.fillText(")", cx+16*CS, cy-tw);
+
+  const tg = ["(","(","(",")",")",")"]; const tx = [-24,-16,-8,2,10,18];
+  for (let i = 0; i < 6; i++) {
+    const w = Math.sin(t*1.75 + octopus.phase + i*0.72);
+    ctx.fillText(tg[i], cx+tx[i]*CS + w*1.4*CS, cy+13*CS + w*2.2*CS);
+  }
+}
+
+function drawSeahorse() {
+  if (!seahorse.active) return;
+  const rows = [
+    "  ^^  "," / o) ","[__-/ ","  /|  "," / |  "," \\ |  ","  ( ) ","  \\_/ "
+  ];
+  const t = aquariumTimeMs * 0.001;
+  const x = seahorse.x, y = seahorse.y;
+  const CS = CREATURE_SCALE;
+  const sway = Math.sin(t*1.15 + seahorse.phase)*1.2*CS;
+  const cellW = 5*CS, rowH = 6*CS;
+
+  // Main body color
+  const r = 238+12*Math.sin(t*0.11+seahorse.phase);
+  const g = 142+18*Math.sin(t*0.16+seahorse.phase+1.4);
+  const b = 48+12*Math.sin(t*0.13+seahorse.phase+2.8);
+  ctx.fillStyle = rgbStr(r, g, b);
+  ctx.font = `${Math.round(10*CS)}px "Courier New", monospace`;
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+
+  for (let row = 0; row < rows.length; row++) {
+    const line = rows[row];
+    const rs = (row>=1 && row<=3) ? sway : 0;
+    for (let col = 0; col < 6; col++) {
+      let ch = col < line.length ? line[col] : ' ';
+      if (ch === ' ') continue;
+      let dc = col;
+      if (seahorse.facingRight) { dc = 5-col; ch = mirrorChar(ch); }
+      ctx.fillText(ch, x+dc*cellW+rs, y+row*rowH);
+    }
+  }
+  // Fin
+  ctx.fillStyle = rgbStr(255, 188, 82);
+  const finFlutter = Math.sin(t*10+seahorse.finPhase)*1.2*CS;
+  const finG = Math.sin(t*12+seahorse.finPhase)>0 ? "~" : "-";
+  const finX = seahorse.facingRight ? x+5*CS+finFlutter : x+20*CS+finFlutter;
+  ctx.fillText(finG, finX, y+24*CS);
+}
+
+function drawAsciiClock() {
+  if (!clockVisible || clockStyle !== 1) return;
+  const h = clockUse24h ? String(new Date().getHours()).padStart(2,'0') : (() => { let h = new Date().getHours()%12; return h===0?'12':String(h); })();
+  const m = String(new Date().getMinutes()).padStart(2,'0');
+  const timeText = `${h}:${m}`;
+
+  const glyphRows = 6;
+  const charW = 6 * SCALE;
+  const rowH = 10 * SCALE;
+
+  // Compute total width
+  let totalCols = 0;
+  for (let i = 0; i < timeText.length; i++) {
+    if (i > 0) totalCols += 1;
+    const g = ASCII_CLOCK_GLYPHS[timeText[i]] || ASCII_CLOCK_GLYPHS[' '];
+    let w = 1;
+    for (const r of g) w = Math.max(w, r.length);
+    totalCols += w;
+  }
+
+  const startX = (SCREEN_W - totalCols * charW) / 2;
+  const startY = 68 * SCALE;
+
+  ctx.font = `${Math.round(9*SCALE)}px "Courier New", monospace`;
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+  ctx.fillStyle = clockAsciiColor;
+
+  for (let row = 0; row < glyphRows; row++) {
+    let rowStr = "";
+    for (let i = 0; i < timeText.length; i++) {
+      if (i > 0) rowStr += " ";
+      const g = ASCII_CLOCK_GLYPHS[timeText[i]] || ASCII_CLOCK_GLYPHS[' '];
+      let w = 1;
+      for (const r of g) w = Math.max(w, r.length);
+      const rr = g[row] || "";
+      rowStr += rr.padEnd(w, ' ');
+    }
+    if (clockFlipH) rowStr = rowStr.split('').reverse().map(c => {
+      const m = {'/':'\\','\\':'/', '(':')', ')':'(', '[':']', ']':'[', '{':'}', '}':'{', '<':'>', '>':'<'};
+      return m[c]||c;
+    }).join('');
+    ctx.fillText(rowStr, startX, startY + row * rowH);
+  }
+}
+
+function drawSmallClock() {
+  if (!clockVisible || clockStyle !== 0) return;
+  const now = new Date();
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let timeStr;
+  if (clockUse24h) {
+    timeStr = `${months[now.getMonth()]} ${String(now.getDate()).padStart(2,'0')}  ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  } else {
+    let h = now.getHours() % 12; if (h===0) h=12;
+    timeStr = `${months[now.getMonth()]} ${String(now.getDate()).padStart(2,'0')}  ${h}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours()<12?"AM":"PM"}`;
+  }
+  if (clockFlipH) timeStr = timeStr.split('').reverse().join('');
+
+  ctx.font = `${Math.round(14*SCALE)}px "Courier New", monospace`;
+  ctx.textBaseline = "top";
+  ctx.textAlign = "center";
+  ctx.fillStyle = clockSmallColor;
+  const y = clockSmallPos === 0 ? 4*SCALE : SCREEN_H - 18*SCALE;
+  ctx.fillText(timeStr, SCREEN_W/2, y);
+}
+
+// ---- HUD & Settings ---------------------------------------------------------
+const S = SCALE;
+
+function drawBtn(x, y, w, h, label, fg, bg, radius) {
+  radius = radius || 4*S;
+  ctx.fillStyle = bg;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, radius); ctx.fill();
+  ctx.strokeStyle = fg;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, radius); ctx.stroke();
+  ctx.fillStyle = fg;
+  ctx.font = UI_FONT;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(label, x+w/2, y+h/2);
+}
+
+const PANEL_X = 40*S, PANEL_Y = 24*S, PANEL_W = 240*S, PANEL_H = 208*S;
+const BTN_W = 30*S, BTN_H = 24*S;
+const MINUS_X = PANEL_X + 166*S, PLUS_X = PANEL_X + 202*S;
+const ROW_START = PANEL_Y + 36*S, ROW_GAP = 34*S;
+const CLOSE_X = PANEL_X + PANEL_W - 34*S, CLOSE_Y = PANEL_Y + 8*S, CLOSE_WH = 24*S;
+const TAB_Y = PANEL_Y + PANEL_H - 30*S, TAB_H = 22*S;
+const TAB_TANK_X = PANEL_X + 5*S, TAB_TANK_W = 48*S;
+const TAB_SEA_X = TAB_TANK_X + TAB_TANK_W + 4*S, TAB_SEA_W = 62*S;
+const TAB_CLK_X = TAB_SEA_X + TAB_SEA_W + 4*S, TAB_CLK_W = 50*S;
+const TAB_BG_X = TAB_CLK_X + TAB_CLK_W + 4*S, TAB_BG_W = 58*S;
+const CORNER_BTN_W = 28*S, CORNER_BTN_H = 20*S, CORNER_BTN_Y = 3*S;
+const DBG_BTN_X = 7*S, SETTINGS_BTN_X = SCREEN_W - 35*S;
+
+function drawSettingRow(y, label, value) {
+  const cY = y + BTN_H/2;
+  ctx.font = UI_FONT; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#FFF"; ctx.fillText(label, PANEL_X + 12*S, cY);
+  ctx.textAlign = "right"; ctx.fillStyle = "#ADFF2F";
+  ctx.fillText(value, PANEL_X + 156*S, cY);
+  drawBtn(MINUS_X, y, BTN_W, BTN_H, "-", "#FFF", "#006400");
+  drawBtn(PLUS_X, y, BTN_W, BTN_H, "+", "#FFF", "#006400");
+}
+
+function drawToggleRow(y, label, leftLbl, rightLbl, leftOn, rightOn) {
+  const cY = y + BTN_H/2;
+  ctx.font = UI_FONT; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#FFF"; ctx.fillText(label, PANEL_X + 12*S, cY);
+  drawBtn(MINUS_X, y, BTN_W, BTN_H, leftLbl, leftOn?"#000080":"#FFF", leftOn?"#00FFFF":"#006400");
+  drawBtn(PLUS_X, y, BTN_W, BTN_H, rightLbl, rightOn?"#000080":"#FFF", rightOn?"#00FFFF":"#006400");
+}
+
+function drawHud() {
+  if (!hudVisible) return;
+  drawBtn(DBG_BTN_X, CORNER_BTN_Y, CORNER_BTN_W, CORNER_BTN_H, "D", "#FFF", "#006400");
+  drawBtn(SETTINGS_BTN_X, CORNER_BTN_Y, CORNER_BTN_W, CORNER_BTN_H, "S", "#FFF", "#006400");
+  drawBtn(SETTINGS_BTN_X, CORNER_BTN_Y + CORNER_BTN_H + 4*S, CORNER_BTN_W, CORNER_BTN_H, "R", "#FFF", "#006400");
+  drawBtn(SETTINGS_BTN_X, CORNER_BTN_Y + (CORNER_BTN_H+4*S)*2, CORNER_BTN_W, CORNER_BTN_H, "H", "#FFF", "#006400");
+  drawBtn(SETTINGS_BTN_X, CORNER_BTN_Y + (CORNER_BTN_H+4*S)*3, CORNER_BTN_W, CORNER_BTN_H, "O", "#FFF", "#006400");
+
+  ctx.font = UI_FONT; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = "#FFF";
+  ctx.fillText(`ASCII Aquarium v1.67-web`, 8*S, 32*S);
+  ctx.fillText(`Fish:${fishCount}  FPS:${fps.toFixed(1)}`, 8*S, 48*S);
+}
+
+function drawSettings() {
+  if (!settingsOpen) return;
+  ctx.fillStyle = "#000080";
+  ctx.beginPath(); ctx.roundRect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H, 8*S); ctx.fill();
+  ctx.strokeStyle = "#00FFFF"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H, 8*S); ctx.stroke();
+  ctx.font = UI_FONT; ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillStyle = "#FFF"; ctx.fillText("Settings", PANEL_X+10*S, PANEL_Y+10*S);
+  drawBtn(CLOSE_X, CLOSE_Y, CLOSE_WH, CLOSE_WH, "X", "#FFF", "#FF0000");
+
+  // Tabs
+  const tabs = [
+    [TAB_TANK_X, TAB_TANK_W, "Tank", TAB_TANK],
+    [TAB_SEA_X, TAB_SEA_W, "Seaweed", TAB_SEAWEED],
+    [TAB_CLK_X, TAB_CLK_W, "Clock", TAB_CLOCK],
+    [TAB_BG_X, TAB_BG_W, "Backgrd", TAB_BG]
+  ];
+  for (const [tx, tw, tl, tid] of tabs) {
+    const active = activeTab === tid;
+    drawBtn(tx, TAB_Y, tw, TAB_H, tl, active?"#000080":"#00FFFF", active?"#00FFFF":"#006400");
+  }
+
+  if (activeTab === TAB_TANK) {
+    drawSettingRow(ROW_START, "Fish Population", String(fishCount));
+    drawSettingRow(ROW_START+ROW_GAP, "Bubble Amount", String(bubbleCount));
+    drawSettingRow(ROW_START+ROW_GAP*2, "Octopus Freq", `${octFreq}/hr`);
+    drawSettingRow(ROW_START+ROW_GAP*3, "Seahorse Freq", `${shFreq}/hr`);
+  } else if (activeTab === TAB_SEAWEED) {
+    drawSettingRow(ROW_START, "Sway", swaySpeed.toFixed(2));
+    drawSettingRow(ROW_START+ROW_GAP, "Length", seaweedLen.toFixed(2));
+    drawSettingRow(ROW_START+ROW_GAP*2, "Length Rand", seaweedLenRand.toFixed(2));
+  } else if (activeTab === TAB_CLOCK) {
+    drawToggleRow(ROW_START, "Clock", "OFF", "ON", !clockVisible, clockVisible);
+    drawToggleRow(ROW_START+ROW_GAP, "Format", "12h", "24h", !clockUse24h, clockUse24h);
+    drawToggleRow(ROW_START+ROW_GAP*2, "Style", "Small", "ASCII", clockStyle===0, clockStyle===1);
+    if (clockStyle === 0) {
+      drawToggleRow(ROW_START+ROW_GAP*3, "Position", "Top", "Bot", clockSmallPos===0, clockSmallPos===1);
+    }
+    drawToggleRow(ROW_START+ROW_GAP*4, "Flip", "Off", "On", !clockFlipH, clockFlipH);
+  } else {
+    drawSettingRow(ROW_START, "Style", BG_NAMES[bgMode]);
+    if (bgMode === BG_FLOWERS) {
+      const actX = PANEL_X + 134*S, actW = 98*S;
+      const cY = ROW_START + ROW_GAP + BTN_H/2;
+      ctx.fillStyle = "#FFF"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText("Flowers", PANEL_X+12*S, cY);
+      drawBtn(actX, ROW_START+ROW_GAP, actW, BTN_H, "Randomize", "#00FFFF", "#006400");
+    }
+  }
+}
+
+// ---- Click handler ----------------------------------------------------------
+function inside(mx, my, rx, ry, rw, rh) {
+  return mx >= rx && mx < rx+rw && my >= ry && my < ry+rh;
+}
+
+function cycleFreq(arr, current, delta) {
+  let idx = arr.indexOf(current);
+  if (idx < 0) idx = 0;
+  idx += delta;
+  if (idx < 0) idx = arr.length - 1;
+  if (idx >= arr.length) idx = 0;
+  return arr[idx];
+}
+
+function randomizeFlowers() {
+  pixelFlowers[0] = { cx: frand(42,98)*S, cy: frand(50,86)*S, radius: frand(50,63)*S, rotation: frand(0,6.28),
+    color: rgbStr(randInt(0,10),randInt(18,38),randInt(46,96)) };
+  pixelFlowers[1] = { cx: frand(214,278)*S, cy: frand(48,90)*S, radius: frand(50,63)*S, rotation: frand(0,6.28),
+    color: rgbStr(randInt(0,10),randInt(18,38),randInt(46,96)) };
+  pixelFlowers[2] = { cx: frand(162,248)*S, cy: frand(124,SEA_LEVEL_Y/S-18)*S, radius: frand(20,34)*S, rotation: frand(0,6.28),
+    color: rgbStr(randInt(92,146),randInt(84,126),randInt(8,28)) };
+}
+
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (SCREEN_W / rect.width);
+  const my = (e.clientY - rect.top) * (SCREEN_H / rect.height);
+
+  // Top-left toggle HUD
+  if (inside(mx, my, 0, 0, 42*S, 26*S)) {
+    hudVisible = !hudVisible;
+    if (!hudVisible) settingsOpen = false;
+    return;
+  }
+
+  // HUD buttons
+  if (hudVisible) {
+    if (inside(mx, my, SETTINGS_BTN_X, CORNER_BTN_Y, CORNER_BTN_W, CORNER_BTN_H)) {
+      settingsOpen = !settingsOpen; return;
+    }
+    if (inside(mx, my, SETTINGS_BTN_X, CORNER_BTN_Y+CORNER_BTN_H+4*S, CORNER_BTN_W, CORNER_BTN_H)) {
+      spreadFish(); return; // Respawn
+    }
+    if (inside(mx, my, SETTINGS_BTN_X, CORNER_BTN_Y+(CORNER_BTN_H+4*S)*2, CORNER_BTN_W, CORNER_BTN_H)) {
+      // Spawn seahorse at center
+      seahorse.active = true; seahorse.facingRight = Math.random()<0.5;
+      seahorse.x = SCREEN_W*0.5-16*S; seahorse.baseY = SEA_LEVEL_Y*0.46;
+      seahorse.y = seahorse.baseY; seahorse.vx = seahorse.facingRight ? frand(1.4,2.4)*S*SEAHORSE_SPEED_BOOST : -frand(1.4,2.4)*S*SEAHORSE_SPEED_BOOST;
+      seahorse.phase = frand(0,6.28); seahorse.finPhase = frand(0,6.28);
+      scheduleSh(aquariumTimeMs); return;
+    }
+    if (inside(mx, my, SETTINGS_BTN_X, CORNER_BTN_Y+(CORNER_BTN_H+4*S)*3, CORNER_BTN_W, CORNER_BTN_H)) {
+      // Spawn octopus at center
+      octopus.active = true; octopus.x = SCREEN_W*0.5; octopus.baseY = SEA_LEVEL_Y*0.55;
+      octopus.y = octopus.baseY; octopus.vx = Math.random()<0.5 ? -frand(3.8,6.5)*S : frand(3.8,6.5)*S;
+      octopus.phase = frand(0,6.28); octopus.colorPhase = frand(0,6.28);
+      scheduleOct(aquariumTimeMs); return;
+    }
+  }
+
+  // Settings panel interaction
+  if (settingsOpen) {
+    if (inside(mx, my, CLOSE_X, CLOSE_Y, CLOSE_WH, CLOSE_WH)) { settingsOpen = false; return; }
+
+    // Tab clicks
+    if (inside(mx, my, TAB_TANK_X, TAB_Y, TAB_TANK_W, TAB_H)) { activeTab = TAB_TANK; return; }
+    if (inside(mx, my, TAB_SEA_X, TAB_Y, TAB_SEA_W, TAB_H)) { activeTab = TAB_SEAWEED; return; }
+    if (inside(mx, my, TAB_CLK_X, TAB_Y, TAB_CLK_W, TAB_H)) { activeTab = TAB_CLOCK; return; }
+    if (inside(mx, my, TAB_BG_X, TAB_Y, TAB_BG_W, TAB_H)) { activeTab = TAB_BG; return; }
+
+    if (activeTab === TAB_TANK) {
+      if (inside(mx, my, MINUS_X, ROW_START, BTN_W, BTN_H)) { fishCount = clamp(fishCount-1, MIN_FISH, MAX_FISH); applyFishPop(); return; }
+      if (inside(mx, my, PLUS_X, ROW_START, BTN_W, BTN_H)) { fishCount = clamp(fishCount+1, MIN_FISH, MAX_FISH); applyFishPop(); return; }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP, BTN_W, BTN_H)) { bubbleCount = clamp(bubbleCount-1, MIN_BUBBLES, MAX_BUBBLES); applyBubblePop(); return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP, BTN_W, BTN_H)) { bubbleCount = clamp(bubbleCount+1, MIN_BUBBLES, MAX_BUBBLES); applyBubblePop(); return; }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP*2, BTN_W, BTN_H)) { octFreq = cycleFreq(FREQ_OPTIONS, octFreq, -1); if (!octopus.active) octopus.nextSpawnMs = 0; return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP*2, BTN_W, BTN_H)) { octFreq = cycleFreq(FREQ_OPTIONS, octFreq, 1); if (!octopus.active) octopus.nextSpawnMs = 0; return; }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP*3, BTN_W, BTN_H)) { shFreq = cycleFreq(FREQ_OPTIONS, shFreq, -1); if (!seahorse.active) seahorse.nextSpawnMs = 0; return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP*3, BTN_W, BTN_H)) { shFreq = cycleFreq(FREQ_OPTIONS, shFreq, 1); if (!seahorse.active) seahorse.nextSpawnMs = 0; return; }
+    } else if (activeTab === TAB_SEAWEED) {
+      if (inside(mx, my, MINUS_X, ROW_START, BTN_W, BTN_H)) { swaySpeed = clamp(swaySpeed-0.05, 0.25, 2.5); return; }
+      if (inside(mx, my, PLUS_X, ROW_START, BTN_W, BTN_H)) { swaySpeed = clamp(swaySpeed+0.05, 0.25, 2.5); return; }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP, BTN_W, BTN_H)) { seaweedLen = clamp(seaweedLen-0.05, 0.80, 1.60); return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP, BTN_W, BTN_H)) { seaweedLen = clamp(seaweedLen+0.05, 0.80, 1.60); return; }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP*2, BTN_W, BTN_H)) { seaweedLenRand = clamp(seaweedLenRand-0.05, 0, 0.50); return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP*2, BTN_W, BTN_H)) { seaweedLenRand = clamp(seaweedLenRand+0.05, 0, 0.50); return; }
+    } else if (activeTab === TAB_CLOCK) {
+      if (inside(mx, my, MINUS_X, ROW_START, BTN_W, BTN_H)) { clockVisible = false; return; }
+      if (inside(mx, my, PLUS_X, ROW_START, BTN_W, BTN_H)) { clockVisible = true; return; }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP, BTN_W, BTN_H)) { clockUse24h = false; return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP, BTN_W, BTN_H)) { clockUse24h = true; return; }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP*2, BTN_W, BTN_H)) { clockStyle = 0; return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP*2, BTN_W, BTN_H)) { clockStyle = 1; return; }
+      if (clockStyle === 0) {
+        if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP*3, BTN_W, BTN_H)) { clockSmallPos = 0; return; }
+        if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP*3, BTN_W, BTN_H)) { clockSmallPos = 1; return; }
+      }
+      if (inside(mx, my, MINUS_X, ROW_START+ROW_GAP*4, BTN_W, BTN_H)) { clockFlipH = false; return; }
+      if (inside(mx, my, PLUS_X, ROW_START+ROW_GAP*4, BTN_W, BTN_H)) { clockFlipH = true; return; }
+    } else {
+      if (inside(mx, my, MINUS_X, ROW_START, BTN_W, BTN_H)) { bgMode = (bgMode-1+BG_COUNT) % BG_COUNT; return; }
+      if (inside(mx, my, PLUS_X, ROW_START, BTN_W, BTN_H)) { bgMode = (bgMode+1) % BG_COUNT; return; }
+      if (bgMode === BG_FLOWERS && inside(mx, my, PANEL_X+134*S, ROW_START+ROW_GAP, 98*S, BTN_H)) {
+        randomizeFlowers(); return;
+      }
+    }
+    return;
+  }
+
+  // Feed
+  spawnFlake(mx, my);
+});
+
+// ---- Persistence via localStorage -------------------------------------------
+function saveState() {
+  try {
+    localStorage.setItem("aq_state", JSON.stringify({
+      fishCount, bubbleCount, octFreq, shFreq, swaySpeed, seaweedLen, seaweedLenRand,
+      bgMode, clockVisible, clockUse24h, clockStyle, clockSmallPos, clockFlipH
+    }));
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem("aq_state"));
+    if (!s) return;
+    fishCount = clamp(s.fishCount || DEFAULT_FISH, MIN_FISH, MAX_FISH);
+    bubbleCount = clamp(s.bubbleCount || DEFAULT_BUBBLES, MIN_BUBBLES, MAX_BUBBLES);
+    octFreq = s.octFreq || 1;
+    shFreq = s.shFreq || 1;
+    swaySpeed = clamp(s.swaySpeed || 1.10, 0.25, 2.5);
+    seaweedLen = clamp(s.seaweedLen || 1.35, 0.80, 1.60);
+    seaweedLenRand = clamp(s.seaweedLenRand || 0.35, 0, 0.50);
+    bgMode = clamp(s.bgMode || BG_BLUE, 0, BG_COUNT-1);
+    clockVisible = !!s.clockVisible;
+    clockUse24h = !!s.clockUse24h;
+    clockStyle = s.clockStyle || 0;
+    clockSmallPos = s.clockSmallPos || 0;
+    clockFlipH = !!s.clockFlipH;
+  } catch(e) {}
+}
+
+// Periodically save
+setInterval(saveState, 5000);
+
+// ---- Fullscreen on double-click ---------------------------------------------
+canvas.addEventListener("dblclick", () => {
+  if (!document.fullscreenElement) canvas.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+});
+
+// ---- Init & Main Loop -------------------------------------------------------
+loadState();
+flakes = [];
+for (let i = 0; i < MAX_FLAKES; i++) flakes.push({ active: false });
+
+// Need a one-frame delay to measure text widths after font loads
+ctx.font = MONO_FONT;
+initFishPool();
+initBubbles();
+
+// Draw "tap top-left to toggle HUD" hint
+let hintAlpha = 1.0;
+
+function frame(timestamp) {
+  if (!lastFrameTime) lastFrameTime = timestamp;
+  const elapsedMs = Math.min(timestamp - lastFrameTime, 50);
+  lastFrameTime = timestamp;
+  aquariumTimeMs += elapsedMs;
+  const dt = elapsedMs * 0.001;
+
+  // FPS
+  fpsCount++;
+  if (timestamp - fpsTimer >= 500) {
+    fps = (fpsCount * 1000) / (timestamp - fpsTimer + 1);
+    fpsCount = 0; fpsTimer = timestamp;
+  }
+
+  // Update
+  updateFlakes(dt);
+  updateBubbles(dt);
+  updateFish(dt);
+  updateOctopus(aquariumTimeMs, dt);
+  updateSeahorse(aquariumTimeMs, dt);
+  keepVisitorsSeparated();
+
+  // Render
+  drawBackground();
+  drawAsciiClock();
+  drawSeaweed();
+  drawBubbles();
+  drawFlakes();
+  drawFish();
+  drawOctopus();
+  drawSeahorse();
+  drawSmallClock();
+  drawHud();
+  drawSettings();
+
+  // Startup hint
+  if (hintAlpha > 0) {
+    ctx.globalAlpha = hintAlpha;
+    ctx.font = `${Math.round(10*S)}px sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#00FFFF";
+    ctx.fillText("Click top-left corner to toggle HUD  \u2022  Click anywhere to feed  \u2022  Double-click for fullscreen", SCREEN_W/2, SCREEN_H - 16*S);
+    ctx.globalAlpha = 1;
+    hintAlpha -= dt * 0.12;
+  }
+
+  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -8,10 +8,8 @@
 #define USER_SETUP_ID 2432
 
 // Display driver
-#define ILI9341_DRIVER
-
-// Optional colour order (many CYD boards use BGR with ILI9341)
-#define TFT_RGB_ORDER TFT_BGR
+#define ILI9341_2_DRIVER
+#define TFT_INVERSION_ON
 
 // ESP32 TFT pin mapping (common ESP32-2432S028R board)
 #define TFT_MISO 12
@@ -28,6 +26,7 @@
 #define TFT_HEIGHT 240
 
 #define SPI_FREQUENCY       40000000
+//#define SPI_FREQUENCY       55000000
 #define SPI_READ_FREQUENCY  20000000
 #define SPI_TOUCH_FREQUENCY 2500000
 

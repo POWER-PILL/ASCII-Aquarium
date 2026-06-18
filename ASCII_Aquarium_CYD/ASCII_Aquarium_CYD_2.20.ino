@@ -78,11 +78,13 @@ static const int TFT_BACKLIGHT_PIN = 27;
 static const int AMBIENT_LED_RED_PIN = -1;
 static const int AMBIENT_LED_GREEN_PIN = -1;
 static const int AMBIENT_LED_BLUE_PIN = -1;
+static const int LDR_PIN = -1;
 #else
 static const int TFT_BACKLIGHT_PIN = 21;
 static const int AMBIENT_LED_RED_PIN = 4;
 static const int AMBIENT_LED_GREEN_PIN = 16;
 static const int AMBIENT_LED_BLUE_PIN = 17;
+static const int LDR_PIN = 34;  // onboard light sensor (CYD ESP32-2432S028R)
 #endif
 static const bool AMBIENT_LED_ACTIVE_LOW = true;
 static const uint32_t BACKLIGHT_PWM_FREQ = 12000;
@@ -1209,6 +1211,10 @@ bool ambientLightEnabled = false;
 int ambientLightBrightness = DEFAULT_AMBIENT_BRIGHTNESS;
 bool ambientLightLinkedToBackground = true;
 uint16_t ambientLightColor = DEFAULT_BACKGROUND_GRADIENT_COLOR;
+bool ldrAutoEnabled = false;
+int ldrSmoothed = 2048;
+int ldrScalePct = 100;
+unsigned long lastLdrMs = 0;
 bool lightScheduleEnabled = DEFAULT_LIGHT_SCHEDULE_ENABLED;
 int lightScheduleStartHour = DEFAULT_LIGHT_SCHEDULE_START_HOUR;
 int lightScheduleEndHour = DEFAULT_LIGHT_SCHEDULE_END_HOUR;
@@ -2362,12 +2368,24 @@ bool lightScheduleLcdUiGuardActive() {
 
 int scheduledLcdBrightness(unsigned long now) {
   int brightness = clampVal(lcdBacklightBrightness, MIN_LCD_BACKLIGHT_BRIGHTNESS, MAX_LCD_BACKLIGHT_BRIGHTNESS);
+  if (ldrAutoEnabled && LDR_PIN >= 0) brightness = clampVal((brightness * ldrScalePct) / 100, 0, MAX_LCD_BACKLIGHT_BRIGHTNESS);
   if (!lightScheduleControlsLcd()) return brightness;
   int scheduledBrightness = (brightness * lightScheduleScalePercent(now)) / 100;
   if (lightScheduleLcdUiGuardActive()) {
     scheduledBrightness = max(scheduledBrightness, LIGHT_SCHEDULE_UI_MIN_LCD_BRIGHTNESS);
   }
   return clampVal(scheduledBrightness, 0, MAX_LCD_BACKLIGHT_BRIGHTNESS);
+}
+
+void serviceLdr(unsigned long now) {
+  if (!ldrAutoEnabled || LDR_PIN < 0) return;
+  if (now - lastLdrMs < 300) return;
+  lastLdrMs = now;
+  int raw = analogRead(LDR_PIN);
+  ldrSmoothed = (ldrSmoothed * 7 + raw) / 8;
+  // On CYD, bright ambient → low ADC (~0); dark → higher ADC (max ~250).
+  ldrScalePct = map(constrain(ldrSmoothed, 0, 250), 0, 250, 100, 20);
+  applyLcdBacklight();
 }
 
 int scheduledAmbientBrightness(unsigned long now) {
@@ -2899,6 +2917,7 @@ void savePersistentState() {
   prefs.putInt("amb_brite", ambientLightBrightness);
   prefs.putBool("amb_bg", ambientLightLinkedToBackground);
   prefs.putUShort("amb_color", ambientLightColor);
+  prefs.putBool("ldr_auto", ldrAutoEnabled);
   prefs.putBool("ls_on", lightScheduleEnabled);
   prefs.putUChar("ls_start", (uint8_t)lightScheduleStartHour);
   prefs.putUChar("ls_end", (uint8_t)lightScheduleEndHour);
@@ -2971,6 +2990,7 @@ void loadPersistentState() {
     ambientLightBrightness = prefs.getInt("amb_brite", DEFAULT_AMBIENT_BRIGHTNESS);
     ambientLightLinkedToBackground = prefs.getBool("amb_bg", true);
     ambientLightColor = prefs.getUShort("amb_color", DEFAULT_BACKGROUND_GRADIENT_COLOR);
+    ldrAutoEnabled = prefs.getBool("ldr_auto", false);
     lightScheduleEnabled = prefs.getBool("ls_on", DEFAULT_LIGHT_SCHEDULE_ENABLED);
     lightScheduleStartHour = prefs.getUChar("ls_start", DEFAULT_LIGHT_SCHEDULE_START_HOUR);
     lightScheduleEndHour = prefs.getUChar("ls_end", DEFAULT_LIGHT_SCHEDULE_END_HOUR);
@@ -4961,6 +4981,10 @@ void drawBacklightPanel(TFT_eSprite& s) {
                          !ambientLightEnabled, ambientLightEnabled);
   snprintf(value, sizeof(value), "%d%%", ambientLightBrightness);
   drawBacklightValueRow(s, BACKLIGHT_ROW_START_Y + BACKLIGHT_ROW_GAP * 2, "Amb Bright", value);
+  if (LDR_PIN >= 0) {
+    drawBacklightToggleRow(s, BACKLIGHT_ROW_START_Y + BACKLIGHT_ROW_GAP * 3, "LDR Auto", "OFF", "ON",
+                           !ldrAutoEnabled, ldrAutoEnabled);
+  }
   drawButton(s, BACKLIGHT_COLOUR_MODE_X, BACKLIGHT_BOTTOM_BUTTON_Y, BACKLIGHT_BOTTOM_BUTTON_W, BACKLIGHT_BUTTON_H,
              "Colour Mode", lightColorModePanelOpen ? TFT_NAVY : TFT_CYAN,
              lightColorModePanelOpen ? TFT_CYAN : TFT_DARKGREEN);
@@ -5556,6 +5580,22 @@ void handleBacklightPanelTouch(int x, int y) {
   if (inside(x, y, BACKLIGHT_PLUS_X, ambientBrightY, BACKLIGHT_BUTTON_W, BACKLIGHT_BUTTON_H)) {
     adjustAmbientLightBrightness(AMBIENT_BRIGHTNESS_STEP);
     return;
+  }
+
+  if (LDR_PIN >= 0) {
+    int ldrRowY = BACKLIGHT_ROW_START_Y + BACKLIGHT_ROW_GAP * 3;
+    if (inside(x, y, BACKLIGHT_MINUS_X, ldrRowY, BACKLIGHT_BUTTON_W, BACKLIGHT_BUTTON_H)) {
+      ldrAutoEnabled = false;
+      ldrScalePct = 100;
+      applyLcdBacklight();
+      markSettingsDirty();
+      return;
+    }
+    if (inside(x, y, BACKLIGHT_PLUS_X, ldrRowY, BACKLIGHT_BUTTON_W, BACKLIGHT_BUTTON_H)) {
+      ldrAutoEnabled = true;
+      markSettingsDirty();
+      return;
+    }
   }
 
   if (inside(x, y, BACKLIGHT_COLOUR_MODE_X, BACKLIGHT_BOTTOM_BUTTON_Y, BACKLIGHT_BOTTOM_BUTTON_W,
@@ -6198,6 +6238,10 @@ void setup() {
     setWifiStatus(wifiSsid[0] ? "Starting..." : "Ready to scan");
   }
 
+  if (LDR_PIN >= 0) {
+    analogReadResolution(12);
+    ldrSmoothed = analogRead(LDR_PIN);
+  }
   pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
   digitalWrite(TFT_BACKLIGHT_PIN, HIGH);
   tft.init();
@@ -6300,6 +6344,7 @@ void loop() {
   serviceBootButton(now);
   processTouch();
   serviceLightSchedule(now);
+  serviceLdr(now);
   serviceWifi(now);
   serviceSettingsPersistence(now);
   serviceAutoFeed(aquariumNowMs);

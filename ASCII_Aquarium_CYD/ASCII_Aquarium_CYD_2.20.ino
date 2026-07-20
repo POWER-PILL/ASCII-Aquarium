@@ -166,7 +166,7 @@ static const int SETTINGS_BACKGROUND_TAB_W = 58;
 static const int EVENTS_PANEL_X = 36;
 static const int EVENTS_PANEL_Y = 46;
 static const int EVENTS_PANEL_W = 248;
-static const int EVENTS_PANEL_H = 154;
+static const int EVENTS_PANEL_H = 184;
 static const int EVENTS_CLOSE_X = EVENTS_PANEL_X + EVENTS_PANEL_W - 32;
 static const int EVENTS_CLOSE_Y = EVENTS_PANEL_Y + 8;
 static const int EVENTS_CLOSE_W = 24;
@@ -284,6 +284,34 @@ static const int BACKGROUND_COLOR_SWATCH_X = SETTINGS_PANEL_X + 96;
 static const int BACKGROUND_COLOR_SWATCH_W = 28;
 static const int BACKGROUND_COLOR_BUTTON_X = SETTINGS_ACTION_X;
 static const int BACKGROUND_COLOR_BUTTON_W = SETTINGS_ACTION_W;
+static const int AUTO_SKY_BOX_X1 = SETTINGS_PANEL_X + 12;
+static const int AUTO_SKY_BOX_X2 = SETTINGS_PANEL_X + 126;
+static const int AUTO_SKY_BOX_Y1 = SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP * 2;
+static const int AUTO_SKY_BOX_Y2 = AUTO_SKY_BOX_Y1 + 34;
+static const int AUTO_SKY_BOX_W = 102;
+static const int AUTO_SKY_BOX_H = 28;
+static const int AUTO_SKY_PANEL_X = 26;
+static const int AUTO_SKY_PANEL_Y = 52;
+static const int AUTO_SKY_PANEL_W = 268;
+static const int AUTO_SKY_PANEL_H = 116;
+static const int AUTO_SKY_CLOSE_X = AUTO_SKY_PANEL_X + AUTO_SKY_PANEL_W - 34;
+static const int AUTO_SKY_CLOSE_Y = AUTO_SKY_PANEL_Y + 8;
+static const int AUTO_SKY_CLOSE_W = 24;
+static const int AUTO_SKY_CLOSE_H = 24;
+static const int AUTO_SKY_TITLE_Y = AUTO_SKY_PANEL_Y + 12;
+static const int AUTO_SKY_BOX_ROW1_Y = AUTO_SKY_PANEL_Y + 46;
+static const int AUTO_SKY_BOX_ROW2_Y = AUTO_SKY_BOX_ROW1_Y + 34;
+static const int AUTO_SKY_PRESET_ROW_Y = AUTO_SKY_PANEL_Y + 110;
+static const int AUTO_SKY_PRESET_NAME_X = AUTO_SKY_PANEL_X + 164;
+static const int AUTO_SKY_PRESET_BTN_X = AUTO_SKY_PANEL_X + 196;
+static const int AUTO_SKY_PRESET_BTN_W = 60;
+static const int AUTO_SKY_TEST_ROW_Y = AUTO_SKY_PANEL_Y + 138;
+static const int AUTO_SKY_TEST_VALUE_X = AUTO_SKY_PANEL_X + 108;
+static const int AUTO_SKY_TEST_OFF_X = AUTO_SKY_PANEL_X + 118;
+static const int AUTO_SKY_TEST_4M_X = AUTO_SKY_PANEL_X + 156;
+static const int AUTO_SKY_TEST_2M_X = AUTO_SKY_PANEL_X + 194;
+static const int AUTO_SKY_TEST_1M_X = AUTO_SKY_PANEL_X + 232;
+static const int AUTO_SKY_TEST_BTN_W = 30;
 static const int BACKGROUND_COLOR_PANEL_X = CLOCK_COLOR_PANEL_X;
 static const int BACKGROUND_COLOR_PANEL_Y = CLOCK_COLOR_PANEL_Y;
 static const int BACKGROUND_COLOR_PANEL_W = CLOCK_COLOR_PANEL_W;
@@ -328,6 +356,7 @@ static const int CORNER_BUTTON_H = 20;
 static const int CORNER_BUTTON_Y = 3;
 static const int DEBUG_BUTTON_X = 7;
 static const int BACKLIGHT_BUTTON_X = DEBUG_BUTTON_X + CORNER_BUTTON_W + 4;
+static const int ROTATE_BUTTON_X = BACKLIGHT_BUTTON_X + CORNER_BUTTON_W + 4;
 static const int WIFI_BUTTON_X = SCREEN_W - 70;
 static const int SETTINGS_CORNER_BUTTON_X = SCREEN_W - 35;
 static const int RESPAWN_BUTTON_Y = CORNER_BUTTON_Y + CORNER_BUTTON_H + 4;
@@ -335,6 +364,8 @@ static const int SEAHORSE_TEST_BUTTON_X = SETTINGS_CORNER_BUTTON_X;
 static const int SEAHORSE_TEST_BUTTON_Y = RESPAWN_BUTTON_Y + CORNER_BUTTON_H + 4;
 static const int OCTOPUS_TEST_BUTTON_X = SETTINGS_CORNER_BUTTON_X;
 static const int OCTOPUS_TEST_BUTTON_Y = SEAHORSE_TEST_BUTTON_Y + CORNER_BUTTON_H + 4;
+static const int SNAIL_TEST_BUTTON_X = SETTINGS_CORNER_BUTTON_X;
+static const int SNAIL_TEST_BUTTON_Y = OCTOPUS_TEST_BUTTON_Y + CORNER_BUTTON_H + 4;
 
 static const int WIFI_PANEL_X = 8;
 static const int WIFI_PANEL_Y = 28;
@@ -445,6 +476,10 @@ static const int DEFAULT_SEAHORSE_FREQUENCY = 2;
 static const int SEAHORSE_FREQUENCY_OPTIONS[] = {1, 2, 4, 6, 12, 60};
 static constexpr int SEAHORSE_FREQUENCY_OPTION_COUNT =
     sizeof(SEAHORSE_FREQUENCY_OPTIONS) / sizeof(SEAHORSE_FREQUENCY_OPTIONS[0]);
+static const int DEFAULT_SNAIL_FREQUENCY = 2;
+static const int SNAIL_FREQUENCY_OPTIONS[] = {0, 1, 2, 4, 6, 12, 60};
+static constexpr int SNAIL_FREQUENCY_OPTION_COUNT =
+    sizeof(SNAIL_FREQUENCY_OPTIONS) / sizeof(SNAIL_FREQUENCY_OPTIONS[0]);
 static const int DEFAULT_AUTO_FEED_FREQUENCY = 0;
 static const int AUTO_FEED_FREQUENCY_OPTIONS[] = {0, 1, 2, 4, 6, 12, 60};
 static constexpr int AUTO_FEED_FREQUENCY_OPTION_COUNT =
@@ -515,6 +550,18 @@ static const float SEAHORSE_FISH_AVOID_STRENGTH = 6.0f;
 static const float SEAHORSE_FISH_CLEAR_RADIUS_X = 34.0f;
 static const float SEAHORSE_FISH_CLEAR_RADIUS_Y = 28.0f;
 static const float SEAHORSE_SPEED_BOOST = 1.35f;
+static const float SNAIL_EXIT_PAD = 28.0f;
+static const float SNAIL_SPEED_MIN = 0.45f;
+static const float SNAIL_SPEED_MAX = 0.95f;
+static const float SNAIL_BOB_AMPLITUDE = 0.8f;
+static const float SNAIL_BOB_SPEED = 1.4f;
+static const float SNAIL_FLOOR_OFFSET = 18.0f;
+static const unsigned long SNAIL_PAUSE_MIN_MS = 1200UL;
+static const unsigned long SNAIL_PAUSE_MAX_MS = 3200UL;
+static const unsigned long SNAIL_PAUSE_CHECK_MIN_MS = 2500UL;
+static const unsigned long SNAIL_PAUSE_CHECK_MAX_MS = 7000UL;
+static const int SNAIL_TURNAROUND_CHANCE_PERCENT = 40;
+static const int SNAIL_PAUSE_CHANCE_PERCENT = 38;
 static const float VISITOR_CLEAR_RADIUS_X = 56.0f;
 static const float VISITOR_CLEAR_RADIUS_Y = 38.0f;
 
@@ -617,6 +664,20 @@ struct Seahorse {
   float phase;
   float finPhase;
   unsigned long nextSpawnMs;
+};
+
+struct Snail {
+  bool active;
+  bool facingRight;
+  bool paused;
+  float x;
+  float y;
+  float baseY;
+  float vx;
+  float phase;
+  unsigned long nextSpawnMs;
+  unsigned long pauseUntilMs;
+  unsigned long nextPauseCheckMs;
 };
 
 struct TimezoneOption {
@@ -755,6 +816,7 @@ static const uint16_t kBackgroundColorPalette[] = {
     RGB565(130, 56, 0),
     RGB565(100, 0, 0),
     RGB565(58, 20, 120),
+    TFT_BLACK,
     TFT_WHITE,
 };
 static constexpr int BACKGROUND_COLOR_COUNT = sizeof(kBackgroundColorPalette) / sizeof(kBackgroundColorPalette[0]);
@@ -1180,11 +1242,13 @@ Flake flakes[MAX_FLAKES];
 Bubble bubbles[MAX_BUBBLES];
 Octopus octopus;
 Seahorse seahorse;
+Snail snail;
 
 int fishTargetCount = DEFAULT_FISH;
 int bubbleTargetCount = DEFAULT_BUBBLES;
 int octopusFrequency = DEFAULT_OCTOPUS_FREQUENCY;
 int seahorseFrequency = DEFAULT_SEAHORSE_FREQUENCY;
+int snailFrequency = DEFAULT_SNAIL_FREQUENCY;
 int autoFeedFrequency = DEFAULT_AUTO_FEED_FREQUENCY;
 unsigned long nextAutoFeedMs = 0;
 bool autoFeedSprinkleActive = false;
@@ -1204,6 +1268,11 @@ bool eventsPanelOpen = false;
 SettingsTab activeSettingsTab = SETTINGS_TAB_TANK;
 BackgroundStyle backgroundStyle = DEFAULT_BACKGROUND_STYLE;
 uint16_t backgroundGradientColor = DEFAULT_BACKGROUND_GRADIENT_COLOR;
+bool backgroundAutoSkyEnabled = false;
+uint16_t backgroundSunriseColor = RGB565(255, 140, 80);
+uint16_t backgroundDayColor = RGB565(0, 180, 255);
+uint16_t backgroundSunsetColor = RGB565(255, 90, 60);
+uint16_t backgroundNightColor = RGB565(0, 0, 40);
 int lcdBacklightBrightness = DEFAULT_LCD_BACKLIGHT_BRIGHTNESS;
 bool ambientLightEnabled = false;
 int ambientLightBrightness = DEFAULT_AMBIENT_BRIGHTNESS;
@@ -1228,6 +1297,46 @@ int asciiClockFontIndex = DEFAULT_ASCII_CLOCK_FONT_INDEX;
 bool clockStylePanelOpen = false;
 bool clockColorPanelOpen = false;
 bool backgroundColorPanelOpen = false;
+bool autoSkyPanelOpen = false;
+enum AutoSkyPreset {
+  AUTO_SKY_PRESET_DEFAULT = 0,
+  AUTO_SKY_PRESET_TROPICAL,
+  AUTO_SKY_PRESET_STORMY,
+  AUTO_SKY_PRESET_NEON,
+};
+struct AutoSkyPresetDef {
+  const char* name;
+  uint16_t sunrise;
+  uint16_t day;
+  uint16_t sunset;
+  uint16_t night;
+};
+static const AutoSkyPresetDef kAutoSkyPresets[] = {
+  {"Default", RGB565(255, 140, 80), RGB565(0, 180, 255), RGB565(255, 90, 60), RGB565(0, 0, 40)},
+  {"Tropical", RGB565(255, 180, 90), RGB565(0, 220, 200), RGB565(255, 110, 140), RGB565(0, 70, 110)},
+  {"Stormy", RGB565(150, 170, 200), RGB565(70, 100, 150), RGB565(120, 90, 140), RGB565(0, 0, 20)},
+  {"Neon", RGB565(255, 80, 180), RGB565(0, 220, 255), RGB565(220, 60, 255), TFT_BLACK},
+};
+static constexpr int AUTO_SKY_PRESET_COUNT = sizeof(kAutoSkyPresets) / sizeof(kAutoSkyPresets[0]);
+enum AutoSkyFastForwardMode {
+  AUTO_SKY_FF_OFF = 0,
+  AUTO_SKY_FF_4M,
+  AUTO_SKY_FF_2M,
+  AUTO_SKY_FF_1M,
+};
+AutoSkyPreset autoSkyPresetIndex = AUTO_SKY_PRESET_DEFAULT;
+AutoSkyFastForwardMode autoSkyFastForwardMode = AUTO_SKY_FF_OFF;
+bool autoSkyFastForwardEnabled = false;
+unsigned long autoSkyFastForwardStartMs = 0;
+int autoSkyFastForwardStartMinutes = 0;
+
+static const int BACKGROUND_COLOR_TARGET_MANUAL  = 0;
+static const int BACKGROUND_COLOR_TARGET_SUNRISE = 1;
+static const int BACKGROUND_COLOR_TARGET_DAY     = 2;
+static const int BACKGROUND_COLOR_TARGET_SUNSET  = 3;
+static const int BACKGROUND_COLOR_TARGET_NIGHT   = 4;
+
+int backgroundColorTarget = BACKGROUND_COLOR_TARGET_MANUAL;
 bool ambientColorPanelOpen = false;
 bool clockFlipHorizontal = false;
 uint16_t clockSmallTextColor = DEFAULT_SMALL_CLOCK_COLOR;
@@ -1291,6 +1400,7 @@ uint8_t bmpRowBuffer[SCREEN_W * 3];
 unsigned long respawnButtonFlashUntilMs = 0;
 unsigned long seahorseButtonFlashUntilMs = 0;
 unsigned long octopusButtonFlashUntilMs = 0;
+unsigned long snailButtonFlashUntilMs = 0;
 
 unsigned long lastMs = 0;
 // Animation clock. During sequence capture it advances one video frame per saved BMP,
@@ -1306,6 +1416,7 @@ static const unsigned long HUD_BUTTON_FLASH_MS = 180;
 bool touchWasDown = false;
 bool spriteReady = false;
 bool touchReady = false;
+bool displayRotated180 = false;
 int mainCanvasActualColorDepth = 0;
 int mainCanvasRenderHeight = SCREEN_H;
 bool stripRenderActive = false;
@@ -1750,6 +1861,19 @@ int normalizeSeahorseFrequency(int value) {
   return best;
 }
 
+int normalizeSnailFrequency(int value) {
+  int best = SNAIL_FREQUENCY_OPTIONS[0];
+  int bestDiff = abs(value - best);
+  for (int i = 1; i < SNAIL_FREQUENCY_OPTION_COUNT; ++i) {
+    int diff = abs(value - SNAIL_FREQUENCY_OPTIONS[i]);
+    if (diff < bestDiff) {
+      best = SNAIL_FREQUENCY_OPTIONS[i];
+      bestDiff = diff;
+    }
+  }
+  return best;
+}
+
 int normalizeAutoFeedFrequency(int value) {
   int best = AUTO_FEED_FREQUENCY_OPTIONS[0];
   int bestDiff = abs(value - best);
@@ -1799,6 +1923,24 @@ void cycleSeahorseFrequency(int delta) {
   markSettingsDirty();
 }
 
+void cycleSnailFrequency(int delta) {
+  int current = normalizeSnailFrequency(snailFrequency);
+  int index = 0;
+  for (int i = 0; i < SNAIL_FREQUENCY_OPTION_COUNT; ++i) {
+    if (SNAIL_FREQUENCY_OPTIONS[i] == current) {
+      index = i;
+      break;
+    }
+  }
+
+  index += delta;
+  if (index < 0) index = SNAIL_FREQUENCY_OPTION_COUNT - 1;
+  if (index >= SNAIL_FREQUENCY_OPTION_COUNT) index = 0;
+  snailFrequency = SNAIL_FREQUENCY_OPTIONS[index];
+  if (!snail.active) snail.nextSpawnMs = 0;
+  markSettingsDirty();
+}
+
 void cycleAutoFeedFrequency(int delta) {
   int current = normalizeAutoFeedFrequency(autoFeedFrequency);
   int index = 0;
@@ -1830,6 +1972,12 @@ unsigned long octopusSpawnIntervalMs() {
 
 unsigned long seahorseSpawnIntervalMs() {
   int frequency = normalizeSeahorseFrequency(seahorseFrequency);
+  return 3600000UL / (unsigned long)frequency;
+}
+
+unsigned long snailSpawnIntervalMs() {
+  int frequency = normalizeSnailFrequency(snailFrequency);
+  if (frequency <= 0) return 0;
   return 3600000UL / (unsigned long)frequency;
 }
 
@@ -1865,6 +2013,16 @@ int physicalMapX(int rawX) {
 int physicalMapY(int rawY) {
   rawY = clampVal(rawY, TOUCH_RAW_MIN_Y, TOUCH_RAW_MAX_Y);
   return map(rawY, TOUCH_RAW_MIN_Y, TOUCH_RAW_MAX_Y, 0, PHYSICAL_SCREEN_H - 1);
+}
+
+void applyDisplayRotation() {
+  tft.setRotation(displayRotated180 ? 3 : 1);
+}
+
+void toggleDisplayRotation() {
+  displayRotated180 = !displayRotated180;
+  applyDisplayRotation();
+  savePersistentState();
 }
 
 int16_t touchBestTwoAverage(int16_t a, int16_t b, int16_t c) {
@@ -1927,6 +2085,10 @@ bool readSharedSpiTouchPoint(int& sx, int& sy) {
   int physicalY = physicalMapY(rawY);
   sx = physicalX - DISPLAY_OFFSET_X;
   sy = physicalY - DISPLAY_OFFSET_Y;
+  if (displayRotated180) {
+    sx = (SCREEN_W - 1) - sx;
+    sy = (SCREEN_H - 1) - sy;
+  }
   return (sx >= 0 && sx < SCREEN_W && sy >= 0 && sy < SCREEN_H);
 }
 #endif
@@ -1940,6 +2102,10 @@ bool readTouchPoint(int& sx, int& sy) {
   TS_Point p = touch.getPoint();
   sx = screenMapX(p.x);
   sy = screenMapY(p.y);
+  if (displayRotated180) {
+    sx = (SCREEN_W - 1) - sx;
+    sy = (SCREEN_H - 1) - sy;
+  }
   return (sx >= 0 && sx < SCREEN_W && sy >= 0 && sy < SCREEN_H);
 #endif
 }
@@ -2291,8 +2457,182 @@ void setBackgroundGradientColor(uint16_t color) {
   markSettingsDirty();
 }
 
+void setBackgroundAutoSkyEnabled(bool enabled) {
+  backgroundAutoSkyEnabled = enabled;
+  invalidateBackgroundGradientCache();
+  applyAmbientLight();
+  markSettingsDirty();
+}
+
+void setAutoSkyColor(int target, uint16_t color) {
+  switch (target) {
+    case BACKGROUND_COLOR_TARGET_SUNRISE: backgroundSunriseColor = color; break;
+    case BACKGROUND_COLOR_TARGET_DAY: backgroundDayColor = color; break;
+    case BACKGROUND_COLOR_TARGET_SUNSET: backgroundSunsetColor = color; break;
+    case BACKGROUND_COLOR_TARGET_NIGHT: backgroundNightColor = color; break;
+    default: setBackgroundGradientColor(color); return;
+  }
+  invalidateBackgroundGradientCache();
+  applyAmbientLight();
+  markSettingsDirty();
+}
+
+uint16_t colorForBackgroundTarget(int target) {
+  switch (target) {
+    case BACKGROUND_COLOR_TARGET_SUNRISE: return backgroundSunriseColor;
+    case BACKGROUND_COLOR_TARGET_DAY: return backgroundDayColor;
+    case BACKGROUND_COLOR_TARGET_SUNSET: return backgroundSunsetColor;
+    case BACKGROUND_COLOR_TARGET_NIGHT: return backgroundNightColor;
+    default: return backgroundGradientColor;
+  }
+}
+
+const char* backgroundColorTargetName(int target) {
+  switch (target) {
+    case BACKGROUND_COLOR_TARGET_SUNRISE: return "Sunrise Colour";
+    case BACKGROUND_COLOR_TARGET_DAY: return "Day Colour";
+    case BACKGROUND_COLOR_TARGET_SUNSET: return "Sunset Colour";
+    case BACKGROUND_COLOR_TARGET_NIGHT: return "Night Colour";
+    default: return "Background Colour";
+  }
+}
+
+const char* autoSkyPresetName() {
+  return kAutoSkyPresets[clampVal((int)autoSkyPresetIndex, 0, AUTO_SKY_PRESET_COUNT - 1)].name;
+}
+
+void applyAutoSkyPreset(int preset) {
+  int idx = clampVal((int)preset, 0, AUTO_SKY_PRESET_COUNT - 1);
+  autoSkyPresetIndex = (AutoSkyPreset)idx;
+  backgroundSunriseColor = kAutoSkyPresets[idx].sunrise;
+  backgroundDayColor = kAutoSkyPresets[idx].day;
+  backgroundSunsetColor = kAutoSkyPresets[idx].sunset;
+  backgroundNightColor = kAutoSkyPresets[idx].night;
+}
+
+unsigned long autoSkyFastForwardDayMs() {
+  switch (autoSkyFastForwardMode) {
+    case AUTO_SKY_FF_1M: return 60000UL;
+    case AUTO_SKY_FF_2M: return 120000UL;
+    case AUTO_SKY_FF_4M: return 240000UL;
+    default: return 240000UL;
+  }
+}
+
+const char* autoSkyFastForwardStatusLabel() {
+  switch (autoSkyFastForwardMode) {
+    case AUTO_SKY_FF_1M: return "24h/1m";
+    case AUTO_SKY_FF_2M: return "24h/2m";
+    case AUTO_SKY_FF_4M: return "24h/4m";
+    default: return "Off";
+  }
+}
+
+void setAutoSkyFastForwardMode(int mode) {
+  if (mode == AUTO_SKY_FF_OFF) {
+    autoSkyFastForwardEnabled = false;
+    autoSkyFastForwardMode = AUTO_SKY_FF_OFF;
+    return;
+  }
+  int minutesNow = 0;
+  if (!currentMinutesOfDay(minutesNow)) minutesNow = 12 * 60;
+  autoSkyFastForwardMode = (AutoSkyFastForwardMode)mode;
+  autoSkyFastForwardEnabled = true;
+  autoSkyFastForwardStartMs = millis();
+  autoSkyFastForwardStartMinutes = minutesNow;
+}
+
+bool currentMinutesOfDay(int& minutesOut) {
+  if (autoSkyFastForwardEnabled) {
+    unsigned long elapsed = millis() - autoSkyFastForwardStartMs;
+    unsigned long dayMs = autoSkyFastForwardDayMs();
+    unsigned long advanced = (elapsed % dayMs) * 1440UL / dayMs;
+    minutesOut = (autoSkyFastForwardStartMinutes + (int)advanced) % 1440;
+    return true;
+  }
+  struct tm timeInfo;
+  if (!getLocalTime(&timeInfo, 10)) return false;
+  minutesOut = timeInfo.tm_hour * 60 + timeInfo.tm_min;
+  return true;
+}
+
+uint16_t blendRgb565(uint16_t a, uint16_t b, float t) {
+  t = clampVal(t, 0.0f, 1.0f);
+  int ar = ((a >> 11) & 0x1F) * 255 / 31;
+  int ag = ((a >> 5) & 0x3F) * 255 / 63;
+  int ab = (a & 0x1F) * 255 / 31;
+  int br = ((b >> 11) & 0x1F) * 255 / 31;
+  int bg = ((b >> 5) & 0x3F) * 255 / 63;
+  int bb = (b & 0x1F) * 255 / 31;
+  int rr = (int)(ar + (br - ar) * t + 0.5f);
+  int rg = (int)(ag + (bg - ag) * t + 0.5f);
+  int rb = (int)(ab + (bb - ab) * t + 0.5f);
+  return RGB565(rr, rg, rb);
+}
+
+uint16_t computeAutoSkyColor() {
+  int minutesNow = 0;
+  if (!currentMinutesOfDay(minutesNow)) return backgroundGradientColor;
+
+  // Anchors:
+  // 04:30–05:30  : pre-dawn transition (night -> sunrise)
+  // 05:30–07:30  : sunrise transition (sunrise -> day)
+  // 07:30–17:30  : stable day
+  // 17:30–19:30  : sunset transition (day -> sunset -> night)
+  // 19:30–04:30  : stable night
+  const int dawnStart    = 4 * 60 + 30;   // 04:30
+  const int sunriseStart = 5 * 60 + 30;   // 05:30
+  const int sunriseEnd   = 7 * 60 + 30;   // 07:30
+  const int dayEnd       = 17 * 60 + 30;  // 17:30
+  const int sunsetEnd    = 19 * 60 + 30;  // 19:30
+
+  // Stable night
+  if (minutesNow < dawnStart) {
+    return backgroundNightColor;
+  }
+
+  // Pre-dawn: Night -> Sunrise
+  if (minutesNow < sunriseStart) {
+    float t = (minutesNow - dawnStart) / float(sunriseStart - dawnStart);
+    return blendRgb565(backgroundNightColor, backgroundSunriseColor, t);
+  }
+
+  // Sunrise → Day
+  if (minutesNow < sunriseEnd) {
+    float t = (minutesNow - sunriseStart) / float(sunriseEnd - sunriseStart);
+    // Start near sunriseColor, end near dayColor
+    return blendRgb565(backgroundSunriseColor, backgroundDayColor, t);
+  }
+
+  // Stable Day
+  if (minutesNow < dayEnd) {
+    return backgroundDayColor;
+  }
+
+  // Sunset transition: Day → Sunset → Night
+  if (minutesNow < sunsetEnd) {
+    float t = (minutesNow - dayEnd) / float(sunsetEnd - dayEnd);
+    // First half: day -> sunset, second half: sunset -> night
+    if (t < 0.5f) {
+      float t1 = t / 0.5f;
+      return blendRgb565(backgroundDayColor, backgroundSunsetColor, t1);
+    } else {
+      float t2 = (t - 0.5f) / 0.5f;
+      return blendRgb565(backgroundSunsetColor, backgroundNightColor, t2);
+    }
+  }
+
+  // Stable Night
+  return backgroundNightColor;
+}
+
+uint16_t activeBackgroundColor() {
+  if (!backgroundAutoSkyEnabled || !backgroundUsesGradientColor()) return backgroundGradientColor;
+  return computeAutoSkyColor();
+}
+
 uint16_t activeAmbientLightColor() {
-  return ambientLightLinkedToBackground ? backgroundGradientColor : ambientLightColor;
+  return ambientLightLinkedToBackground ? activeBackgroundColor() : ambientLightColor;
 }
 
 bool lightScheduleControlsLcd() {
@@ -2888,12 +3228,18 @@ void savePersistentState() {
   prefs.putInt("bubbles", bubbleTargetCount);
   prefs.putInt("oct_freq", octopusFrequency);
   prefs.putInt("seah_freq", seahorseFrequency);
+  prefs.putInt("snail_freq", snailFrequency);
   prefs.putInt("auto_feed", autoFeedFrequency);
   prefs.putFloat("sway", seaweedSwaySpeed);
   prefs.putFloat("sea_len", seaweedLength);
   prefs.putFloat("sea_rand", seaweedLengthRandomness);
   prefs.putUChar("bg_style", (uint8_t)backgroundStyle);
   prefs.putUShort("bg_color", backgroundGradientColor);
+  prefs.putBool("bg_auto", backgroundAutoSkyEnabled);
+  prefs.putUShort("bg_sunr", backgroundSunriseColor);
+  prefs.putUShort("bg_day", backgroundDayColor);
+  prefs.putUShort("bg_suns", backgroundSunsetColor);
+  prefs.putUShort("bg_nite", backgroundNightColor);
   prefs.putInt("lcd_brite", lcdBacklightBrightness);
   prefs.putBool("amb_on", ambientLightEnabled);
   prefs.putInt("amb_brite", ambientLightBrightness);
@@ -2904,6 +3250,7 @@ void savePersistentState() {
   prefs.putUChar("ls_end", (uint8_t)lightScheduleEndHour);
   prefs.putUChar("ls_dim", (uint8_t)lightScheduleDimMinutes);
   prefs.putUChar("ls_mode", (uint8_t)lightScheduleDimmingMode);
+  prefs.putBool("disp_rot", displayRotated180);
   prefs.putBool("clock_on", clockVisible);
   prefs.putBool("clock_24h", clockUse24Hour);
   prefs.putBool("clock_net", clockUseInternetTime);
@@ -2941,6 +3288,7 @@ void loadPersistentState() {
     bubbleTargetCount = prefs.getInt("bubbles", DEFAULT_BUBBLES);
     octopusFrequency = prefs.getInt("oct_freq", DEFAULT_OCTOPUS_FREQUENCY);
     seahorseFrequency = prefs.getInt("seah_freq", DEFAULT_SEAHORSE_FREQUENCY);
+    snailFrequency = prefs.getInt("snail_freq", DEFAULT_SNAIL_FREQUENCY);
     autoFeedFrequency = prefs.getInt("auto_feed", DEFAULT_AUTO_FEED_FREQUENCY);
     if (version < 2 && seahorseFrequency == 2) {
       seahorseFrequency = DEFAULT_SEAHORSE_FREQUENCY;
@@ -2961,10 +3309,20 @@ void loadPersistentState() {
     if (version >= 5) {
       backgroundStyle = normalizeBackgroundStyle(prefs.getUChar("bg_style", (uint8_t)DEFAULT_BACKGROUND_STYLE));
       backgroundGradientColor = prefs.getUShort("bg_color", DEFAULT_BACKGROUND_GRADIENT_COLOR);
+      backgroundAutoSkyEnabled = prefs.getBool("bg_auto", false);
+      backgroundSunriseColor = prefs.getUShort("bg_sunr", RGB565(255, 140, 80));
+      backgroundDayColor = prefs.getUShort("bg_day", RGB565(0, 180, 255));
+      backgroundSunsetColor = prefs.getUShort("bg_suns", RGB565(255, 90, 60));
+      backgroundNightColor = prefs.getUShort("bg_nite", RGB565(0, 0, 40));
     } else {
       uint8_t savedMode = prefs.getUChar("bg_mode", 1);
       backgroundStyle = legacyBackgroundStyle(savedMode, version);
       backgroundGradientColor = legacyBackgroundColor(savedMode, version);
+      backgroundAutoSkyEnabled = false;
+      backgroundSunriseColor = RGB565(255, 140, 80);
+      backgroundDayColor = RGB565(0, 180, 255);
+      backgroundSunsetColor = RGB565(255, 90, 60);
+      backgroundNightColor = RGB565(0, 0, 40);
     }
     lcdBacklightBrightness = prefs.getInt("lcd_brite", DEFAULT_LCD_BACKLIGHT_BRIGHTNESS);
     ambientLightEnabled = prefs.getBool("amb_on", false);
@@ -2976,6 +3334,7 @@ void loadPersistentState() {
     lightScheduleEndHour = prefs.getUChar("ls_end", DEFAULT_LIGHT_SCHEDULE_END_HOUR);
     lightScheduleDimMinutes = prefs.getUChar("ls_dim", DEFAULT_LIGHT_SCHEDULE_DIM_MINUTES);
     lightScheduleDimmingMode = (LightScheduleDimmingMode)prefs.getUChar("ls_mode", DEFAULT_LIGHT_SCHEDULE_DIM_MODE);
+    displayRotated180 = prefs.getBool("disp_rot", false);
     clockVisible = prefs.getBool("clock_on", false);
     clockUse24Hour = prefs.getBool("clock_24h", false);
     clockUseInternetTime = prefs.getBool("clock_net", false);
@@ -3005,6 +3364,7 @@ void loadPersistentState() {
   bubbleTargetCount = clampVal(bubbleTargetCount, MIN_BUBBLES, MAX_BUBBLES);
   octopusFrequency = normalizeOctopusFrequency(octopusFrequency);
   seahorseFrequency = normalizeSeahorseFrequency(seahorseFrequency);
+  snailFrequency = normalizeSnailFrequency(snailFrequency);
   autoFeedFrequency = normalizeAutoFeedFrequency(autoFeedFrequency);
   if (autoFeedFrequency <= 0) {
     nextAutoFeedMs = 0;
@@ -3369,11 +3729,11 @@ void drawBackground(TFT_eSprite& s, float tSec) {
       clearRenderSurface(s);
       break;
     case BACKGROUND_STYLE_DITHERED:
-      drawCachedTopGradientBackground(s, BACKGROUND_STYLE_DITHERED, backgroundGradientColor,
+      drawCachedTopGradientBackground(s, BACKGROUND_STYLE_DITHERED, activeBackgroundColor(),
                                       GRADIENT_DITHER_ORDERED, 4, 28);
       break;
     case BACKGROUND_STYLE_SMOOTH:
-      drawCachedTopGradientBackground(s, BACKGROUND_STYLE_SMOOTH, backgroundGradientColor,
+      drawCachedTopGradientBackground(s, BACKGROUND_STYLE_SMOOTH, activeBackgroundColor(),
                                       GRADIENT_DITHER_NONE, 1, 0);
       break;
     case BACKGROUND_STYLE_FLOWERS:
@@ -3900,6 +4260,48 @@ void scheduleSeahorseSpawn(unsigned long now) {
   seahorse.nextSpawnMs = now + seahorseSpawnIntervalMs();
 }
 
+void scheduleSnailSpawn(unsigned long now) {
+  unsigned long interval = snailSpawnIntervalMs();
+  snail.nextSpawnMs = (interval > 0) ? (now + interval) : 0;
+}
+
+void spawnSnail(unsigned long now) {
+  if (normalizeSnailFrequency(snailFrequency) <= 0) {
+    snail.active = false;
+    snail.nextSpawnMs = 0;
+    return;
+  }
+
+  bool fromLeft = (random(100) < 50);
+  snail.active = true;
+  snail.facingRight = fromLeft;
+  snail.vx = fromLeft ? frand(SNAIL_SPEED_MIN, SNAIL_SPEED_MAX)
+                      : -frand(SNAIL_SPEED_MIN, SNAIL_SPEED_MAX);
+  snail.x = fromLeft ? -SNAIL_EXIT_PAD : (SCREEN_W + SNAIL_EXIT_PAD);
+  snail.baseY = SEA_LEVEL_Y + SNAIL_FLOOR_OFFSET;
+  snail.y = snail.baseY;
+  snail.phase = frand(0.0f, 6.28318f);
+  snail.paused = false;
+  snail.pauseUntilMs = 0;
+  snail.nextPauseCheckMs = now + random(SNAIL_PAUSE_CHECK_MIN_MS, SNAIL_PAUSE_CHECK_MAX_MS + 1UL);
+  scheduleSnailSpawn(now);
+}
+
+void spawnSnailAtCenter(unsigned long now) {
+  snail.active = true;
+  snail.facingRight = (random(100) < 50);
+  snail.x = SCREEN_W * 0.5f - 10.0f;
+  snail.baseY = SEA_LEVEL_Y + SNAIL_FLOOR_OFFSET;
+  snail.y = snail.baseY;
+  snail.vx = snail.facingRight ? frand(SNAIL_SPEED_MIN, SNAIL_SPEED_MAX)
+                               : -frand(SNAIL_SPEED_MIN, SNAIL_SPEED_MAX);
+  snail.phase = frand(0.0f, 6.28318f);
+  snail.paused = false;
+  snail.pauseUntilMs = 0;
+  snail.nextPauseCheckMs = now + random(SNAIL_PAUSE_CHECK_MIN_MS, SNAIL_PAUSE_CHECK_MAX_MS + 1UL);
+  scheduleSnailSpawn(now);
+}
+
 void spawnSeahorse(unsigned long now) {
   bool fromLeft = (random(100) < 50);
   seahorse.active = true;
@@ -3946,6 +4348,48 @@ void updateSeahorse(unsigned long now, float dt) {
   if ((seahorse.vx > 0.0f && seahorse.x > SCREEN_W + SEAHORSE_EXIT_PAD) ||
       (seahorse.vx < 0.0f && seahorse.x < -SEAHORSE_EXIT_PAD)) {
     seahorse.active = false;
+  }
+}
+
+void updateSnail(unsigned long now, float dt) {
+  if (!snail.active) {
+    if (snail.nextSpawnMs == 0) {
+      scheduleSnailSpawn(now);
+    } else if (timeReached(now, snail.nextSpawnMs)) {
+      spawnSnail(now);
+    }
+    return;
+  }
+
+  float t = now * 0.001f;
+
+  if (snail.paused) {
+    snail.y = snail.baseY + sinf(t * (SNAIL_BOB_SPEED * 0.7f) + snail.phase) * (SNAIL_BOB_AMPLITUDE * 0.45f);
+    if (timeReached(now, snail.pauseUntilMs)) {
+      snail.paused = false;
+      if (random(100) < SNAIL_TURNAROUND_CHANCE_PERCENT) {
+        snail.facingRight = !snail.facingRight;
+        snail.vx = -snail.vx;
+      }
+      snail.nextPauseCheckMs = now + random(SNAIL_PAUSE_CHECK_MIN_MS, SNAIL_PAUSE_CHECK_MAX_MS + 1UL);
+    }
+  } else {
+    snail.x += snail.vx * dt;
+    snail.y = snail.baseY + sinf(t * SNAIL_BOB_SPEED + snail.phase) * SNAIL_BOB_AMPLITUDE;
+
+    if (timeReached(now, snail.nextPauseCheckMs)) {
+      if (random(100) < SNAIL_PAUSE_CHANCE_PERCENT) {
+        snail.paused = true;
+        snail.pauseUntilMs = now + random(SNAIL_PAUSE_MIN_MS, SNAIL_PAUSE_MAX_MS + 1UL);
+      } else {
+        snail.nextPauseCheckMs = now + random(SNAIL_PAUSE_CHECK_MIN_MS, SNAIL_PAUSE_CHECK_MAX_MS + 1UL);
+      }
+    }
+  }
+
+  if ((snail.vx > 0.0f && snail.x > SCREEN_W + SNAIL_EXIT_PAD) ||
+      (snail.vx < 0.0f && snail.x < -SNAIL_EXIT_PAD)) {
+    snail.active = false;
   }
 }
 
@@ -4227,6 +4671,37 @@ void drawSeahorse(TFT_eSprite& s) {
   s.setTextFont(2);
 }
 
+uint16_t snailColor(float tSec) {
+  int r = 188 + (int)(10.0f * sinf(tSec * 0.17f + snail.phase));
+  int g = 164 + (int)(8.0f * sinf(tSec * 0.13f + snail.phase + 1.3f));
+  int b = 108 + (int)(10.0f * sinf(tSec * 0.11f + snail.phase + 2.2f));
+  return rgb565From888(r, g, b);
+}
+
+void drawSnail(TFT_eSprite& s) {
+  if (!snail.active) return;
+
+  static const char* rightFrames[] = {"(_)/'", "(_)/^", "(_)/'", "(_)/~"};
+  static const char* leftFrames[]  = {"'\\(_)", "^\\(_)", "'\\(_)", "~\\(_)"};
+  static const int rightFrameXOffset[] = {0, -2, 0, -3};
+  static const int leftFrameXOffset[]  = {0, 0, 0, 0};
+  static const int FRAME_COUNT = sizeof(rightFrames) / sizeof(rightFrames[0]);
+
+  float t = aquariumTimeSec();
+  int frame = ((int)(t * 3.0f)) % FRAME_COUNT;
+  int x = (int)snail.x;
+  int y = (int)snail.y;
+
+  const char* glyph = snail.facingRight ? rightFrames[frame] : leftFrames[frame];
+  x += snail.facingRight ? rightFrameXOffset[frame] : leftFrameXOffset[frame];
+
+  s.setTextSize(1);
+  s.setTextFont(2);
+  s.setTextDatum(TL_DATUM);
+  s.setTextColor(snailColor(t));
+  s.drawString(glyph, x, y);
+}
+
 void drawAsciiClockBackground(TFT_eSprite& s) {
   if (!clockVisible || clockDisplayStyle != CLOCK_STYLE_ASCII) return;
 
@@ -4331,6 +4806,8 @@ void drawHud(TFT_eSprite& s) {
   drawButton(s, DEBUG_BUTTON_X, CORNER_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "D", TFT_WHITE, TFT_DARKGREEN);
   drawButton(s, BACKLIGHT_BUTTON_X, CORNER_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "B",
              backlightPanelOpen ? TFT_NAVY : TFT_WHITE, backlightPanelOpen ? TFT_CYAN : TFT_DARKGREEN);
+  drawButton(s, ROTATE_BUTTON_X, CORNER_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "U",
+             displayRotated180 ? TFT_NAVY : TFT_WHITE, displayRotated180 ? TFT_CYAN : TFT_DARKGREEN);
   drawButton(s, CAPTURE_BUTTON_X, CORNER_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "C",
              capturePanelOpen ? TFT_NAVY : TFT_WHITE, capturePanelOpen ? TFT_CYAN : TFT_DARKGREEN);
   drawButton(s, WIFI_BUTTON_X, CORNER_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "W",
@@ -4340,12 +4817,15 @@ void drawHud(TFT_eSprite& s) {
   bool respawnFlash = hudButtonFlashActive(respawnButtonFlashUntilMs);
   bool seahorseFlash = hudButtonFlashActive(seahorseButtonFlashUntilMs);
   bool octopusFlash = hudButtonFlashActive(octopusButtonFlashUntilMs);
+  bool snailFlash = hudButtonFlashActive(snailButtonFlashUntilMs);
   drawButton(s, SETTINGS_CORNER_BUTTON_X, RESPAWN_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "R",
              respawnFlash ? TFT_NAVY : TFT_WHITE, respawnFlash ? TFT_CYAN : TFT_DARKGREEN);
   drawButton(s, SEAHORSE_TEST_BUTTON_X, SEAHORSE_TEST_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "H",
              seahorseFlash ? TFT_NAVY : TFT_WHITE, seahorseFlash ? TFT_CYAN : TFT_DARKGREEN);
   drawButton(s, OCTOPUS_TEST_BUTTON_X, OCTOPUS_TEST_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "O",
              octopusFlash ? TFT_NAVY : TFT_WHITE, octopusFlash ? TFT_CYAN : TFT_DARKGREEN);
+  drawButton(s, SNAIL_TEST_BUTTON_X, SNAIL_TEST_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H, "@",
+             snailFlash ? TFT_NAVY : TFT_WHITE, snailFlash ? TFT_CYAN : TFT_DARKGREEN);
   s.setTextDatum(TL_DATUM);
   s.setTextColor(TFT_WHITE, BG_COLOR);
 
@@ -4354,11 +4834,13 @@ void drawHud(TFT_eSprite& s) {
   s.drawString(title, kHudTextX, kHudTextYStart);
 
   char line[64];
+  char ffStatus[20];
+  snprintf(ffStatus, sizeof(ffStatus), "FF:%s", autoSkyFastForwardStatusLabel());
   int visibleFish = activeFishLimit();
   if (visibleFish == fishTargetCount) {
-    snprintf(line, sizeof(line), "Fish:%d  FPS:%2.1f", fishTargetCount, fps);
+    snprintf(line, sizeof(line), "Fish:%d  FPS:%2.1f  %s", fishTargetCount, fps, ffStatus);
   } else {
-    snprintf(line, sizeof(line), "Fish:%d/%d  FPS:%2.1f", visibleFish, fishTargetCount, fps);
+    snprintf(line, sizeof(line), "Fish:%d/%d  FPS:%2.1f  %s", visibleFish, fishTargetCount, fps, ffStatus);
   }
   s.drawString(line, kHudTextX, kHudTextYStart + kHudTextLineDY);
 
@@ -4473,6 +4955,17 @@ void drawWifiToggleRow(TFT_eSprite& s, int rowY, const char* label, bool offActi
   drawButton(s, WIFI_OFF_X, rowY, WIFI_TOGGLE_W, WIFI_ROW_H, "OFF",
              offActive ? TFT_NAVY : TFT_WHITE, offActive ? TFT_CYAN : TFT_DARKGREEN);
   drawButton(s, WIFI_ON_X, rowY, WIFI_TOGGLE_W, WIFI_ROW_H, "ON",
+             onActive ? TFT_NAVY : TFT_WHITE, onActive ? TFT_CYAN : TFT_DARKGREEN);
+}
+
+void drawSettingsToggleRow(TFT_eSprite& s, int rowY, const char* label, bool offActive, bool onActive) {
+  int centerY = rowY + SETTINGS_BUTTON_H / 2;
+  s.setTextDatum(ML_DATUM);
+  s.setTextColor(TFT_WHITE, TFT_NAVY);
+  s.drawString(label, SETTINGS_PANEL_X + 12, centerY);
+  drawButton(s, SETTINGS_MINUS_X, rowY, SETTINGS_BUTTON_W, SETTINGS_BUTTON_H, "OFF",
+             offActive ? TFT_NAVY : TFT_WHITE, offActive ? TFT_CYAN : TFT_DARKGREEN);
+  drawButton(s, SETTINGS_PLUS_X, rowY, SETTINGS_BUTTON_W, SETTINGS_BUTTON_H, "ON",
              onActive ? TFT_NAVY : TFT_WHITE, onActive ? TFT_CYAN : TFT_DARKGREEN);
 }
 
@@ -4810,16 +5303,16 @@ void drawClockColorPanel(TFT_eSprite& s) {
   drawButton(s, CLOCK_COLOR_CLOSE_X, CLOCK_COLOR_CLOSE_Y, CLOCK_COLOR_CLOSE_W, CLOCK_COLOR_CLOSE_H, "X", TFT_WHITE, TFT_RED);
 }
 
-void drawBackgroundColorRow(TFT_eSprite& s, int rowY) {
+void drawBackgroundColorRow(TFT_eSprite& s, int rowY, const char* label, uint16_t color) {
   const int centerY = rowY + SETTINGS_BUTTON_H / 2;
   s.setTextDatum(ML_DATUM);
   s.setTextColor(TFT_WHITE, TFT_NAVY);
-  s.drawString("Colour", SETTINGS_PANEL_X + 12, centerY);
+  s.drawString(label, SETTINGS_PANEL_X + 12, centerY);
 
   s.fillRoundRect(BACKGROUND_COLOR_SWATCH_X, rowY + 3, BACKGROUND_COLOR_SWATCH_W, SETTINGS_BUTTON_H - 6, 3,
-                  backgroundGradientColor);
+                  color);
   s.drawRoundRect(BACKGROUND_COLOR_SWATCH_X, rowY + 3, BACKGROUND_COLOR_SWATCH_W, SETTINGS_BUTTON_H - 6, 3,
-                  backgroundGradientColor == TFT_WHITE ? TFT_DARKGREY : TFT_WHITE);
+                  (color == TFT_WHITE || color == TFT_BLACK) ? TFT_DARKGREY : TFT_WHITE);
   drawButton(s, BACKGROUND_COLOR_BUTTON_X, rowY, BACKGROUND_COLOR_BUTTON_W, SETTINGS_BUTTON_H, "Pick",
              backgroundColorPanelOpen ? TFT_NAVY : TFT_CYAN, backgroundColorPanelOpen ? TFT_CYAN : TFT_DARKGREEN);
 }
@@ -4833,14 +5326,14 @@ void drawBackgroundColorPanel(TFT_eSprite& s) {
                   8, TFT_CYAN);
   s.setTextDatum(TL_DATUM);
   s.setTextColor(TFT_WHITE, TFT_NAVY);
-  s.drawString("Background Colour", BACKGROUND_COLOR_PANEL_X + 12, BACKGROUND_COLOR_PANEL_Y + 12);
+  s.drawString(backgroundColorTargetName(backgroundColorTarget), BACKGROUND_COLOR_PANEL_X + 12, BACKGROUND_COLOR_PANEL_Y + 12);
 
   for (int i = 0; i < BACKGROUND_COLOR_COUNT; ++i) {
     int col = i % BACKGROUND_COLOR_SWATCH_COLS;
     int row = i / BACKGROUND_COLOR_SWATCH_COLS;
     int x = BACKGROUND_COLOR_GRID_X + col * (BACKGROUND_COLOR_SWATCH_GRID_W + BACKGROUND_COLOR_SWATCH_GAP_X);
     int y = BACKGROUND_COLOR_GRID_Y + row * (BACKGROUND_COLOR_SWATCH_GRID_H + BACKGROUND_COLOR_SWATCH_GAP_Y);
-    bool isSelected = (kBackgroundColorPalette[i] == backgroundGradientColor);
+    bool isSelected = (kBackgroundColorPalette[i] == colorForBackgroundTarget(backgroundColorTarget));
 
     if (isSelected) {
       s.drawRoundRect(x - 3, y - 3, BACKGROUND_COLOR_SWATCH_GRID_W + 6, BACKGROUND_COLOR_SWATCH_GRID_H + 6, 5,
@@ -4849,7 +5342,7 @@ void drawBackgroundColorPanel(TFT_eSprite& s) {
     s.fillRoundRect(x, y, BACKGROUND_COLOR_SWATCH_GRID_W, BACKGROUND_COLOR_SWATCH_GRID_H, 4, kBackgroundColorPalette[i]);
     s.drawRoundRect(x, y, BACKGROUND_COLOR_SWATCH_GRID_W, BACKGROUND_COLOR_SWATCH_GRID_H, 4,
                     isSelected ? TFT_YELLOW : TFT_CYAN);
-    if (kBackgroundColorPalette[i] == TFT_WHITE) {
+    if (kBackgroundColorPalette[i] == TFT_WHITE || kBackgroundColorPalette[i] == TFT_BLACK) {
       s.drawRoundRect(x + 1, y + 1, BACKGROUND_COLOR_SWATCH_GRID_W - 2, BACKGROUND_COLOR_SWATCH_GRID_H - 2, 3,
                       TFT_DARKGREY);
     }
@@ -5071,6 +5564,85 @@ void drawClockStylePanel(TFT_eSprite& s) {
   drawButton(s, CLOCK_STYLE_CLOSE_X, CLOCK_STYLE_CLOSE_Y, CLOCK_STYLE_CLOSE_W, CLOCK_STYLE_CLOSE_H, "X", TFT_WHITE, TFT_RED);
 }
 
+
+void drawAutoSkyColorBox(TFT_eSprite& s, int x, int y, const char* label, uint16_t color) {
+  uint16_t border = scaleRgb565(color, 0.75f);
+  if (border == color) border = TFT_WHITE;
+  s.fillRoundRect(x, y, AUTO_SKY_BOX_W, AUTO_SKY_BOX_H, 6, color);
+  s.drawRoundRect(x, y, AUTO_SKY_BOX_W, AUTO_SKY_BOX_H, 6, border);
+  s.drawRoundRect(x - 1, y - 1, AUTO_SKY_BOX_W + 2, AUTO_SKY_BOX_H + 2, 7, TFT_DARKGREY);
+  int luminance = (rgb565R8(color) * 30 + rgb565G8(color) * 59 + rgb565B8(color) * 11) / 100;
+  s.setTextDatum(MC_DATUM);
+  s.setTextColor(luminance > 140 ? TFT_BLACK : TFT_WHITE, color);
+  s.drawString(label, x + AUTO_SKY_BOX_W / 2, y + AUTO_SKY_BOX_H / 2);
+  s.setTextDatum(TL_DATUM);
+}
+
+void formatMinutesOfDay12h(int minutes, char* out, size_t outCap) {
+  minutes = ((minutes % 1440) + 1440) % 1440;
+  int hour24 = minutes / 60;
+  int minute = minutes % 60;
+  bool pm = hour24 >= 12;
+  int hour12 = hour24 % 12;
+  if (hour12 == 0) hour12 = 12;
+  snprintf(out, outCap, "%d:%02d %s", hour12, minute, pm ? "PM" : "AM");
+}
+
+void drawAutoSkyPanel(TFT_eSprite& s) {
+  if (!autoSkyPanelOpen) return;
+  s.fillRoundRect(AUTO_SKY_PANEL_X, AUTO_SKY_PANEL_Y, AUTO_SKY_PANEL_W, 172, 8, TFT_NAVY);
+  s.drawRoundRect(AUTO_SKY_PANEL_X, AUTO_SKY_PANEL_Y, AUTO_SKY_PANEL_W, 172, 8, TFT_CYAN);
+  s.setTextDatum(TL_DATUM);
+  s.setTextColor(TFT_WHITE, TFT_NAVY);
+  s.drawString("Auto Sky", AUTO_SKY_PANEL_X + 12, AUTO_SKY_TITLE_Y);
+  s.setTextColor(TFT_LIGHTGREY, TFT_NAVY);
+  s.drawString("Choose a colour for each sky period", AUTO_SKY_PANEL_X + 12, AUTO_SKY_TITLE_Y + 16);
+  drawAutoSkyColorBox(s, AUTO_SKY_BOX_X1, AUTO_SKY_BOX_ROW1_Y, "Sunrise", backgroundSunriseColor);
+  drawAutoSkyColorBox(s, AUTO_SKY_BOX_X2, AUTO_SKY_BOX_ROW1_Y, "Day", backgroundDayColor);
+  drawAutoSkyColorBox(s, AUTO_SKY_BOX_X1, AUTO_SKY_BOX_ROW2_Y, "Sunset", backgroundSunsetColor);
+  drawAutoSkyColorBox(s, AUTO_SKY_BOX_X2, AUTO_SKY_BOX_ROW2_Y, "Night", backgroundNightColor);
+
+  const int presetCenterY = AUTO_SKY_PRESET_ROW_Y + 12;
+  s.setTextDatum(ML_DATUM);
+  s.setTextColor(TFT_WHITE, TFT_NAVY);
+  s.drawString("Preset", AUTO_SKY_PANEL_X + 12, presetCenterY);
+  s.setTextDatum(MR_DATUM);
+  s.setTextColor(TFT_GREENYELLOW, TFT_NAVY);
+  s.drawString(autoSkyPresetName(), AUTO_SKY_PRESET_NAME_X, presetCenterY);
+  s.setTextDatum(TL_DATUM);
+  drawButton(s, AUTO_SKY_PRESET_BTN_X, AUTO_SKY_PRESET_ROW_Y, AUTO_SKY_PRESET_BTN_W, 24, "Cycle",
+             TFT_CYAN, TFT_DARKGREEN);
+
+  char testTime[16];
+  int minutesNow = 0;
+  if (currentMinutesOfDay(minutesNow)) {
+    formatMinutesOfDay12h(minutesNow, testTime, sizeof(testTime));
+  } else {
+    copySafe(testTime, sizeof(testTime), "--:--");
+  }
+  const int testCenterY = AUTO_SKY_TEST_ROW_Y + 12;
+  s.setTextDatum(ML_DATUM);
+  s.setTextColor(TFT_WHITE, TFT_NAVY);
+  s.drawString("FF", AUTO_SKY_PANEL_X + 12, testCenterY);
+  s.setTextDatum(MR_DATUM);
+  s.setTextColor(TFT_GREENYELLOW, TFT_NAVY);
+  s.drawString(testTime, AUTO_SKY_TEST_VALUE_X, testCenterY);
+  s.setTextDatum(TL_DATUM);
+  drawButton(s, AUTO_SKY_TEST_OFF_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24, "Off",
+             autoSkyFastForwardMode == AUTO_SKY_FF_OFF ? TFT_NAVY : TFT_WHITE,
+             autoSkyFastForwardMode == AUTO_SKY_FF_OFF ? TFT_CYAN : TFT_DARKGREEN);
+  drawButton(s, AUTO_SKY_TEST_4M_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24, "4m",
+             autoSkyFastForwardMode == AUTO_SKY_FF_4M ? TFT_NAVY : TFT_WHITE,
+             autoSkyFastForwardMode == AUTO_SKY_FF_4M ? TFT_CYAN : TFT_DARKGREEN);
+  drawButton(s, AUTO_SKY_TEST_2M_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24, "2m",
+             autoSkyFastForwardMode == AUTO_SKY_FF_2M ? TFT_NAVY : TFT_WHITE,
+             autoSkyFastForwardMode == AUTO_SKY_FF_2M ? TFT_CYAN : TFT_DARKGREEN);
+  drawButton(s, AUTO_SKY_TEST_1M_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24, "1m",
+             autoSkyFastForwardMode == AUTO_SKY_FF_1M ? TFT_NAVY : TFT_WHITE,
+             autoSkyFastForwardMode == AUTO_SKY_FF_1M ? TFT_CYAN : TFT_DARKGREEN);
+  drawButton(s, AUTO_SKY_CLOSE_X, AUTO_SKY_CLOSE_Y, AUTO_SKY_CLOSE_W, AUTO_SKY_CLOSE_H, "X", TFT_WHITE, TFT_RED);
+}
+
 void drawSettingsPanel(TFT_eSprite& s) {
   if (!settingsOpen) return;
   int px = SETTINGS_PANEL_X, py = SETTINGS_PANEL_Y, pw = SETTINGS_PANEL_W, ph = SETTINGS_PANEL_H;
@@ -5103,7 +5675,12 @@ void drawSettingsPanel(TFT_eSprite& s) {
   } else {
     drawSettingRow(s, SETTINGS_ROW_START_Y, "Style", backgroundStyleName());
     if (backgroundUsesGradientColor()) {
-      drawBackgroundColorRow(s, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP);
+      drawSettingsToggleRow(s, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP, "Auto Sky", !backgroundAutoSkyEnabled, backgroundAutoSkyEnabled);
+      if (backgroundAutoSkyEnabled) {
+        drawActionRow(s, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP * 2, "Sky Colours", "Open");
+      } else {
+        drawBackgroundColorRow(s, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP * 2, "Colour", backgroundGradientColor);
+      }
     } else if (backgroundStyle == BACKGROUND_STYLE_FLOWERS) {
       drawActionRow(s, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP, "Flowers", "Randomize");
     }
@@ -5125,7 +5702,8 @@ void drawEventsPanel(TFT_eSprite& s) {
 
   drawEventFrequencyRow(s, EVENTS_ROW_START_Y, "Octopus", octopusFrequency);
   drawEventFrequencyRow(s, EVENTS_ROW_START_Y + EVENTS_ROW_GAP, "Seahorse", seahorseFrequency);
-  drawEventFrequencyRow(s, EVENTS_ROW_START_Y + EVENTS_ROW_GAP * 2, "Auto Feed", autoFeedFrequency);
+  drawEventFrequencyRow(s, EVENTS_ROW_START_Y + EVENTS_ROW_GAP * 2, "Snail", snailFrequency);
+  drawEventFrequencyRow(s, EVENTS_ROW_START_Y + EVENTS_ROW_GAP * 3, "Auto Feed", autoFeedFrequency);
 
   drawButton(s, EVENTS_CLOSE_X, EVENTS_CLOSE_Y, EVENTS_CLOSE_W, EVENTS_CLOSE_H, "X", TFT_WHITE, TFT_RED);
 }
@@ -5150,9 +5728,11 @@ void drawSceneLayers(TFT_eSprite& s, bool captureEnabledForSurface, bool drawBac
   drawFish(s);
   drawOctopus(s);
   drawSeahorse(s);
+  drawSnail(s);
   drawClock(s);
   drawHud(s);
   drawSettingsPanel(s);
+  drawAutoSkyPanel(s);
   drawEventsPanel(s);
   drawClockStylePanel(s);
   drawClockColorPanel(s);
@@ -5480,6 +6060,54 @@ void handleClockColorPanelTouch(int x, int y) {
   }
 }
 
+void handleAutoSkyPanelTouch(int x, int y) {
+  if (inside(x, y, AUTO_SKY_CLOSE_X, AUTO_SKY_CLOSE_Y, AUTO_SKY_CLOSE_W, AUTO_SKY_CLOSE_H)) {
+    autoSkyPanelOpen = false;
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_PRESET_BTN_X, AUTO_SKY_PRESET_ROW_Y, AUTO_SKY_PRESET_BTN_W, 24)) {
+    int next = ((int)autoSkyPresetIndex + 1) % AUTO_SKY_PRESET_COUNT;
+    applyAutoSkyPreset((AutoSkyPreset)next);
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_TEST_OFF_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24)) {
+    setAutoSkyFastForwardMode(AUTO_SKY_FF_OFF);
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_TEST_4M_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24)) {
+    setAutoSkyFastForwardMode(AUTO_SKY_FF_4M);
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_TEST_2M_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24)) {
+    setAutoSkyFastForwardMode(AUTO_SKY_FF_2M);
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_TEST_1M_X, AUTO_SKY_TEST_ROW_Y, AUTO_SKY_TEST_BTN_W, 24)) {
+    setAutoSkyFastForwardMode(AUTO_SKY_FF_1M);
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_BOX_X1, AUTO_SKY_BOX_ROW1_Y, AUTO_SKY_BOX_W, AUTO_SKY_BOX_H)) {
+    backgroundColorTarget = BACKGROUND_COLOR_TARGET_SUNRISE;
+    backgroundColorPanelOpen = true;
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_BOX_X2, AUTO_SKY_BOX_ROW1_Y, AUTO_SKY_BOX_W, AUTO_SKY_BOX_H)) {
+    backgroundColorTarget = BACKGROUND_COLOR_TARGET_DAY;
+    backgroundColorPanelOpen = true;
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_BOX_X1, AUTO_SKY_BOX_ROW2_Y, AUTO_SKY_BOX_W, AUTO_SKY_BOX_H)) {
+    backgroundColorTarget = BACKGROUND_COLOR_TARGET_SUNSET;
+    backgroundColorPanelOpen = true;
+    return;
+  }
+  if (inside(x, y, AUTO_SKY_BOX_X2, AUTO_SKY_BOX_ROW2_Y, AUTO_SKY_BOX_W, AUTO_SKY_BOX_H)) {
+    backgroundColorTarget = BACKGROUND_COLOR_TARGET_NIGHT;
+    backgroundColorPanelOpen = true;
+    return;
+  }
+}
+
 void handleBackgroundColorPanelTouch(int x, int y) {
   if (inside(x, y, BACKGROUND_COLOR_CLOSE_X, BACKGROUND_COLOR_CLOSE_Y, BACKGROUND_COLOR_CLOSE_W,
              BACKGROUND_COLOR_CLOSE_H)) {
@@ -5494,7 +6122,7 @@ void handleBackgroundColorPanelTouch(int x, int y) {
     int swatchY = BACKGROUND_COLOR_GRID_Y + row * (BACKGROUND_COLOR_SWATCH_GRID_H + BACKGROUND_COLOR_SWATCH_GAP_Y);
     if (inside(x, y, swatchX - 3, swatchY - 3, BACKGROUND_COLOR_SWATCH_GRID_W + 6,
                BACKGROUND_COLOR_SWATCH_GRID_H + 6)) {
-      setBackgroundGradientColor(kBackgroundColorPalette[i]);
+      setAutoSkyColor(backgroundColorTarget, kBackgroundColorPalette[i]);
       backgroundColorPanelOpen = false;
       return;
     }
@@ -5765,10 +6393,19 @@ void handleEventsPanelTouch(int x, int y) {
   }
 
   if (inside(x, y, EVENTS_MINUS_X, EVENTS_ROW_START_Y + EVENTS_ROW_GAP * 2, EVENTS_BUTTON_W, EVENTS_BUTTON_H)) {
-    cycleAutoFeedFrequency(-1);
+    cycleSnailFrequency(-1);
     return;
   }
   if (inside(x, y, EVENTS_PLUS_X, EVENTS_ROW_START_Y + EVENTS_ROW_GAP * 2, EVENTS_BUTTON_W, EVENTS_BUTTON_H)) {
+    cycleSnailFrequency(1);
+    return;
+  }
+
+  if (inside(x, y, EVENTS_MINUS_X, EVENTS_ROW_START_Y + EVENTS_ROW_GAP * 3, EVENTS_BUTTON_W, EVENTS_BUTTON_H)) {
+    cycleAutoFeedFrequency(-1);
+    return;
+  }
+  if (inside(x, y, EVENTS_PLUS_X, EVENTS_ROW_START_Y + EVENTS_ROW_GAP * 3, EVENTS_BUTTON_W, EVENTS_BUTTON_H)) {
     cycleAutoFeedFrequency(1);
     return;
   }
@@ -5799,6 +6436,7 @@ void processTouch() {
       wifiPanelOpen = false;
       capturePanelOpen = false;
       settingsOpen = false;
+      autoSkyPanelOpen = false;
       backlightPanelOpen = false;
       clockStylePanelOpen = false;
       clockColorPanelOpen = false;
@@ -5828,6 +6466,11 @@ void processTouch() {
       lightColorModePanelOpen = false;
       lightSchedulePanelOpen = false;
     }
+    return;
+  }
+
+  if (hudVisible && inside(x, y, ROTATE_BUTTON_X, CORNER_BUTTON_Y, CORNER_BUTTON_W, CORNER_BUTTON_H)) {
+    toggleDisplayRotation();
     return;
   }
 
@@ -5908,6 +6551,12 @@ void processTouch() {
     spawnOctopusAtCenter(aquariumNowMs);
     return;
   }
+  if (hudVisible && inside(x, y, SNAIL_TEST_BUTTON_X, SNAIL_TEST_BUTTON_Y,
+                           CORNER_BUTTON_W, CORNER_BUTTON_H)) {
+    snailButtonFlashUntilMs = millis() + HUD_BUTTON_FLASH_MS;
+    spawnSnailAtCenter(aquariumNowMs);
+    return;
+  }
 
   if (capturePanelOpen) {
     handleCapturePanelTouch(x, y);
@@ -5926,6 +6575,10 @@ void processTouch() {
 
   if (backgroundColorPanelOpen) {
     handleBackgroundColorPanelTouch(x, y);
+    return;
+  }
+  if (autoSkyPanelOpen) {
+    handleAutoSkyPanelTouch(x, y);
     return;
   }
 
@@ -5971,6 +6624,7 @@ void processTouch() {
 
     if (inside(x, y, SETTINGS_TANK_TAB_X, SETTINGS_TAB_Y, SETTINGS_TANK_TAB_W, SETTINGS_TAB_H)) {
       activeSettingsTab = SETTINGS_TAB_TANK;
+      autoSkyPanelOpen = false;
       clockStylePanelOpen = false;
       clockColorPanelOpen = false;
       backgroundColorPanelOpen = false;
@@ -5979,6 +6633,7 @@ void processTouch() {
     }
     if (inside(x, y, SETTINGS_SEAWEED_TAB_X, SETTINGS_TAB_Y, SETTINGS_SEAWEED_TAB_W, SETTINGS_TAB_H)) {
       activeSettingsTab = SETTINGS_TAB_SEAWEED;
+      autoSkyPanelOpen = false;
       clockStylePanelOpen = false;
       clockColorPanelOpen = false;
       backgroundColorPanelOpen = false;
@@ -5987,12 +6642,14 @@ void processTouch() {
     }
     if (inside(x, y, SETTINGS_CLOCK_TAB_X, SETTINGS_TAB_Y, SETTINGS_CLOCK_TAB_W, SETTINGS_TAB_H)) {
       activeSettingsTab = SETTINGS_TAB_CLOCK;
+      autoSkyPanelOpen = false;
       backgroundColorPanelOpen = false;
       eventsPanelOpen = false;
       return;
     }
     if (inside(x, y, SETTINGS_BACKGROUND_TAB_X, SETTINGS_TAB_Y, SETTINGS_BACKGROUND_TAB_W, SETTINGS_TAB_H)) {
       activeSettingsTab = SETTINGS_TAB_BACKGROUND;
+      autoSkyPanelOpen = false;
       clockStylePanelOpen = false;
       clockColorPanelOpen = false;
       backgroundColorPanelOpen = false;
@@ -6164,13 +6821,32 @@ void processTouch() {
         cycleBackgroundStyle(1);
         return;
       }
-      if (backgroundUsesGradientColor() &&
-          (inside(x, y, BACKGROUND_COLOR_SWATCH_X, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP, BACKGROUND_COLOR_SWATCH_W,
-                  SETTINGS_BUTTON_H) ||
-           inside(x, y, BACKGROUND_COLOR_BUTTON_X, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP, BACKGROUND_COLOR_BUTTON_W,
-                  SETTINGS_BUTTON_H))) {
-        backgroundColorPanelOpen = true;
-        return;
+      if (backgroundUsesGradientColor()) {
+        int autoSkyRowY = SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP;
+        if (inside(x, y, SETTINGS_MINUS_X, autoSkyRowY, SETTINGS_BUTTON_W, SETTINGS_BUTTON_H)) {
+          setBackgroundAutoSkyEnabled(false);
+          backgroundColorPanelOpen = false;
+          autoSkyPanelOpen = false;
+          return;
+        }
+        if (inside(x, y, SETTINGS_PLUS_X, autoSkyRowY, SETTINGS_BUTTON_W, SETTINGS_BUTTON_H)) {
+          setBackgroundAutoSkyEnabled(true);
+          backgroundColorPanelOpen = false;
+          autoSkyPanelOpen = false;
+          return;
+        }
+
+        if (backgroundAutoSkyEnabled) {
+          if (inside(x, y, SETTINGS_ACTION_X, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP * 2, SETTINGS_ACTION_W, SETTINGS_BUTTON_H)) {
+            autoSkyPanelOpen = true;
+            return;
+          }
+        } else if (inside(x, y, BACKGROUND_COLOR_SWATCH_X, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP * 2, BACKGROUND_COLOR_SWATCH_W, SETTINGS_BUTTON_H) ||
+                   inside(x, y, BACKGROUND_COLOR_BUTTON_X, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP * 2, BACKGROUND_COLOR_BUTTON_W, SETTINGS_BUTTON_H)) {
+          backgroundColorTarget = BACKGROUND_COLOR_TARGET_MANUAL;
+          backgroundColorPanelOpen = true;
+          return;
+        }
       }
       if (backgroundStyle == BACKGROUND_STYLE_FLOWERS &&
           inside(x, y, SETTINGS_ACTION_X, SETTINGS_ROW_START_Y + SETTINGS_ROW_GAP, SETTINGS_ACTION_W, SETTINGS_BUTTON_H)) {
@@ -6201,7 +6877,7 @@ void setup() {
   pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
   digitalWrite(TFT_BACKLIGHT_PIN, HIGH);
   tft.init();
-  tft.setRotation(1);  // 320x240 landscape
+  applyDisplayRotation();  // 320x240 landscape, normal or 180-degree
   tft.fillScreen(BG_COLOR);
   tft.setTextWrap(false);
   tft.setTextFont(2);
@@ -6270,6 +6946,11 @@ void setup() {
   octopus.nextSpawnMs = 0;
   seahorse.active = false;
   seahorse.nextSpawnMs = 0;
+  snail.active = false;
+  snail.paused = false;
+  snail.nextSpawnMs = 0;
+  snail.pauseUntilMs = 0;
+  snail.nextPauseCheckMs = 0;
   initFishMirrors();
   initFishGlyphMetrics();
   applyFishPopulation();
@@ -6308,6 +6989,7 @@ void loop() {
   updateFish(dt);
   updateOctopus(aquariumNowMs, dt);
   updateSeahorse(aquariumNowMs, dt);
+  updateSnail(aquariumNowMs, dt);
   if (fishAvoidanceEnabled()) keepVisitorsSeparated();
   renderFrame();
 

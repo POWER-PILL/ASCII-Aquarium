@@ -1,0 +1,142 @@
+name: Build ASCII Aquarium (Pancake)
+
+# Compiles the Marauder Pancake port (ESP32-C5 / ST7796 / FT6336) against the
+# H4W9 ESP32-C5 fork of TFT_eSPI and publishes the firmware binaries as an
+# artifact. Optionally cuts a GitHub release (v* tag push, or a manual run with
+# release=true) — same release template as ESP32_FlipSocial.
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']            # a v* tag push also cuts a release
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Create/refresh a GitHub release with the artifacts'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write           # needed by the (optional) release step
+
+env:
+  # ESP32 Arduino core version (needs C5 support; bump if a newer one is required).
+  ESP32_CORE_VERSION: '3.3.0'
+  # TFT_eSPI fork + branch to build against.
+  TFT_ESPI_REPO: 'https://github.com/H4W9/TFT_eSPI.git'
+  TFT_ESPI_BRANCH: 'ESP32-C5'
+  SKETCH_DIR: 'ASCII_Aquarium_Pancake'
+  FQBN: 'esp32:esp32:esp32c5'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32 core (with C5 support)
+        run: |
+          arduino-cli config init --additional-urls \
+            https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install "esp32:esp32@${ESP32_CORE_VERSION}"
+
+      - name: Install TFT_eSPI (H4W9 ESP32-C5 fork) into the sketchbook
+        run: |
+          LIB_DIR="$(arduino-cli config get directories.user)/libraries"
+          mkdir -p "$LIB_DIR"
+          rm -rf "$LIB_DIR/TFT_eSPI"
+          git clone --depth 1 --branch "${TFT_ESPI_BRANCH}" "${TFT_ESPI_REPO}" "$LIB_DIR/TFT_eSPI"
+          echo "TFT_LIB_DIR=$LIB_DIR/TFT_eSPI" >> "$GITHUB_ENV"
+
+      - name: Select the Pancake TFT_eSPI setup
+        run: |
+          # This fork's User_Setup_Select.h contains the driver-defines dispatch
+          # (the block that #includes TFT_Drivers/ST7796_Defines.h). Do NOT replace
+          # that file, or the ST7796 command set (TFT_CASET, TFT_MADCTL, ...) never
+          # loads. Instead, drop our config in as the library's default User_Setup.h,
+          # which the unmodified Select header already loads by default.
+          cp "${SKETCH_DIR}/User_Setup_marauder_pancake.h" "${TFT_LIB_DIR}/User_Setup.h"
+          echo "----- active includes in User_Setup_Select.h -----"
+          grep -nE '^\s*#include' "${TFT_LIB_DIR}/User_Setup_Select.h" || true
+          echo "----- driver line in the installed User_Setup.h -----"
+          grep -nE '^\s*#define\s+(ST7796_DRIVER|ILI9341_DRIVER)' "${TFT_LIB_DIR}/User_Setup.h" || true
+
+      - name: Show board options (for debugging option keys)
+        run: arduino-cli board details --fqbn "${FQBN}" || true
+
+      - name: Compile
+        run: |
+          arduino-cli compile \
+            --fqbn "${FQBN}" \
+            --board-options "PartitionScheme=huge_app,PSRAM=enabled" \
+            --output-dir "dist/pancake" \
+            --warnings none \
+            "${SKETCH_DIR}"
+
+      # Rename to match the release template:
+      #   ASCII_Aquarium_v<ver>_<board>.bin  (+ bootloader / partitions / merged)
+      - name: Rename binaries
+        id: bins
+        run: |
+          VER=$(grep -oP 'kSketchVersionLabel\s*=\s*"v?\K[^"]+' "${SKETCH_DIR}/${SKETCH_DIR}.ino")
+          VER_U=${VER//./_}
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          mkdir -p out
+          D="dist/pancake"
+          S="${SKETCH_DIR}"
+          # App bin carries the board name.
+          cp "$D/$S.ino.bin" "out/ASCII_Aquarium_v${VER_U}_pancake.bin"
+          # Shared bins (single-board build) match the template names verbatim.
+          [ -f "$D/$S.ino.bootloader.bin" ] && cp "$D/$S.ino.bootloader.bin" "out/ASCII_Aquarium_bootloader.bin" || true
+          [ -f "$D/$S.ino.partitions.bin" ] && cp "$D/$S.ino.partitions.bin" "out/ASCII_Aquarium_partitions.bin" || true
+          [ -f "$D/$S.ino.merged.bin" ]     && cp "$D/$S.ino.merged.bin"     "out/ASCII_Aquarium_merged.bin"     || true
+          [ -f "$D/$S.ino.elf" ]            && cp "$D/$S.ino.elf"            "out/ASCII_Aquarium_pancake.elf"    || true
+          ls -l out
+
+      - name: Upload pancake binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin-pancake
+          path: out/*
+          if-no-files-found: error
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Optional release — on a v* tag push, or a manual run with release=true.
+  # ═══════════════════════════════════════════════════════════════════════════
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: meta
+        run: |
+          VER=$(grep -oP 'kSketchVersionLabel\s*=\s*"v?\K[^"]+' "${SKETCH_DIR}/${SKETCH_DIR}.ino")
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bin-*
+          path: dl
+          merge-multiple: true
+
+      - name: Create / refresh release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.meta.outputs.version }}-pancake"
+          gh release delete "$TAG" --yes || true
+          gh release create "$TAG" dl/*.bin \
+            --title "$TAG" \
+            --notes "Automated build of ASCII Aquarium (Marauder Pancake) $TAG." \
+            --target "${{ github.sha }}"
